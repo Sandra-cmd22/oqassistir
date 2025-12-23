@@ -122,7 +122,7 @@ export function Home({ upcomingMovies, popularMovies, tvShows, onMovieClick, onT
 
         {/* Search Input */}
         <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/60 z-10 pointer-events-none" />
           <input
             type="text"
             value={searchQuery}
@@ -131,7 +131,7 @@ export function Home({ upcomingMovies, popularMovies, tvShows, onMovieClick, onT
             className="w-full bg-white/10 backdrop-blur-md border border-white/20 rounded-[12px] pl-12 pr-4 py-3 text-white placeholder:text-white/40 font-['Montserrat:Regular',sans-serif] text-[14px] focus:outline-none focus:border-white/40 focus:bg-white/15 transition-all"
           />
           {isSearching && (
-            <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40 animate-spin" />
+            <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/60 animate-spin z-10" />
           )}
         </div>
       </div>
