@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gerador de Ícones PWA - Oq Assistir</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Montserrat', Arial, sans-serif;
+      background: linear-gradient(to bottom, #0a0a0f, #1a0f2e, #2d1b3d);
+      color: white;
+      padding: 20px;
+      min-height: 100vh;
+    }
+    
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 24px;
+    }
+    
+    .upload-section {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 12px;
+      padding: 30px;
+      margin-bottom: 30px;
+      text-align: center;
+    }
+    
+    input[type="file"] {
+      display: none;
+    }
+    
+    .upload-label {
+      display: inline-block;
+      background: #6416FF;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    
+    .upload-label:hover {
+      background: #7a2fff;
+    }
+    
+    .preview-section {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-top: 30px;
+    }
+    
+    .icon-preview {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+    }
+    
+    .icon-preview h3 {
+      margin-bottom: 15px;
+      font-size: 16px;
+    }
+    
+    canvas {
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      background: #0a0a0f;
+      margin-bottom: 15px;
+    }
+    
+    button {
+      background: #6416FF;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background 0.3s;
+    }
+    
+    button:hover {
+      background: #7a2fff;
+    }
+    
+    .instructions {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 30px;
+    }
+    
+    .instructions h2 {
+      margin-bottom: 15px;
+      font-size: 18px;
+    }
+    
+    .instructions ol {
+      margin-left: 20px;
+      line-height: 1.8;
+    }
+    
+    .instructions li {
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎬 Gerador de Ícones PWA - Oq Assistir</h1>
+    
+    <div class="upload-section">
+      <h2>1. Faça upload da imagem da logo</h2>
+      <p style="margin: 15px 0; opacity: 0.8;">Use a imagem com o clapperboard, círculos roxos e "ASSISTIR?"</p>
+      <label for="imageUpload" class="upload-label">
+        📁 Escolher Imagem
+      </label>
+      <input type="file" id="imageUpload" accept="image/*">
+    </div>
+    
+    <div id="previewSection" class="preview-section" style="display: none;">
+      <div class="icon-preview">
+        <h3>Ícone 192x192</h3>
+        <canvas id="canvas192" width="192" height="192"></canvas>
+        <button onclick="downloadIcon(192)">⬇️ Baixar 192x192</button>
+      </div>
+      
+      <div class="icon-preview">
+        <h3>Ícone 512x512</h3>
+        <canvas id="canvas512" width="512" height="512"></canvas>
+        <button onclick="downloadIcon(512)">⬇️ Baixar 512x512</button>
+      </div>
+    </div>
+    
+    <div class="instructions">
+      <h2>📋 Instruções</h2>
+      <ol>
+        <li>Faça upload da imagem da logo (PNG, JPG ou SVG)</li>
+        <li>Os ícones serão gerados automaticamente nos tamanhos 192x192 e 512x512</li>
+        <li>Baixe os ícones gerados</li>
+        <li>Substitua os arquivos em <code>src/public/icon-192.png</code> e <code>src/public/icon-512.png</code></li>
+        <li>Faça commit e push das alterações</li>
+      </ol>
+    </div>
+  </div>
+
+  <script>
+    const imageUpload = document.getElementById('imageUpload');
+    const previewSection = document.getElementById('previewSection');
+    let uploadedImage = null;
+    
+    imageUpload.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          uploadedImage = img;
+          generateIcons();
+          previewSection.style.display = 'grid';
+        };
+        img.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+    
+    function generateIcons() {
+      if (!uploadedImage) return;
+      
+      // Gerar ícone 192x192
+      generateIcon(192);
+      
+      // Gerar ícone 512x512
+      generateIcon(512);
+    }
+    
+    function generateIcon(size) {
+      const canvas = document.getElementById(`canvas${size}`);
+      const ctx = canvas.getContext('2d');
+      
+      // Fundo com cor do tema
+      ctx.fillStyle = '#0a0a0f';
+      ctx.fillRect(0, 0, size, size);
+      
+      // Calcular dimensões para centralizar a imagem mantendo proporção
+      const imgAspect = uploadedImage.width / uploadedImage.height;
+      const canvasAspect = size / size;
+      
+      let drawWidth, drawHeight, x, y;
+      
+      if (imgAspect > canvasAspect) {
+        // Imagem é mais larga
+        drawHeight = size;
+        drawWidth = size * imgAspect;
+        x = (size - drawWidth) / 2;
+        y = 0;
+      } else {
+        // Imagem é mais alta
+        drawWidth = size;
+        drawHeight = size / imgAspect;
+        x = 0;
+        y = (size - drawHeight) / 2;
+      }
+      
+      // Desenhar a imagem centralizada
+      ctx.drawImage(uploadedImage, x, y, drawWidth, drawHeight);
+      
+      // Salvar canvas globalmente para download
+      window[`iconCanvas${size}`] = canvas;
+    }
+    
+    function downloadIcon(size) {
+      const canvas = window[`iconCanvas${size}`];
+      if (!canvas) {
+        alert('Gere o ícone primeiro fazendo upload de uma imagem!');
+        return;
+      }
+      
+      canvas.toBlob((blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `icon-${size}.png`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }, 'image/png');
+    }
+  </script>
+</body>
+</html>
+

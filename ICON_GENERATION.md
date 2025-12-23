@@ -1,35 +1,43 @@
 # Como Gerar Ícones PWA com a Logo
 
-Para usar a logo como ícone do PWA na tela inicial do celular, você precisa gerar os arquivos PNG a partir da logo SVG.
+Para usar a imagem da logo (com clapperboard, círculos roxos e "ASSISTIR?") como ícone do PWA na tela inicial do celular.
 
-## Opção 1: Usar Ferramenta Online
+## 🎯 Método Recomendado: Gerador HTML
+
+1. **Abra o arquivo `generate-pwa-icons.html` no navegador**
+   - Pode ser aberto diretamente com um duplo clique
+   - Ou arraste o arquivo para o navegador
+
+2. **Faça upload da imagem da logo**
+   - Clique em "Escolher Imagem"
+   - Selecione a imagem com o clapperboard, círculos roxos e "ASSISTIR?"
+
+3. **Baixe os ícones gerados**
+   - Os ícones serão gerados automaticamente nos tamanhos 192x192 e 512x512
+   - Clique em "Baixar 192x192" e "Baixar 512x512"
+
+4. **Substitua os arquivos**
+   - Substitua `src/public/icon-192.png` pelo arquivo baixado
+   - Substitua `src/public/icon-512.png` pelo arquivo baixado
+
+5. **Faça commit e push**
+   ```bash
+   git add src/public/icon-*.png
+   git commit -m "Atualizar ícones PWA com logo"
+   git push
+   ```
+
+## Opção Alternativa: Ferramenta Online
 
 1. Acesse https://realfavicongenerator.net/ ou https://www.pwabuilder.com/imageGenerator
-2. Faça upload de uma imagem da logo (exporte o componente Group7 como PNG primeiro)
+2. Faça upload da imagem da logo
 3. Gere os ícones nos tamanhos 192x192 e 512x512
-4. Substitua os arquivos em `src/public/icon-192.png` e `src/public/icon-512.png`
+4. Baixe e substitua os arquivos em `src/public/`
 
-## Opção 2: Usar o Componente Group7
+## 📝 Notas Importantes
 
-1. Abra o projeto no navegador
-2. Use as ferramentas de desenvolvedor para capturar a logo
-3. Exporte como PNG nos tamanhos necessários
-4. Substitua os arquivos de ícone
-
-## Opção 3: Criar Manualmente
-
-1. Abra o componente `src/imports/Group7.tsx` no navegador
-2. Capture a tela da logo
-3. Use um editor de imagens para criar ícones quadrados (192x192 e 512x512)
-4. Centralize a logo no ícone com fundo #0a0a0f
-5. Salve como `icon-192.png` e `icon-512.png` em `src/public/`
-
-## Estrutura da Logo
-
-A logo consiste em:
-- Film strip (faixa de filme) branca
-- Texto "Oq" em roxo (#6416FF)
-- Texto "Assistir" em branco
-
-Certifique-se de que os ícones mantenham essa identidade visual.
+- Os ícones devem ter fundo `#0a0a0f` (cor do tema)
+- A logo será centralizada automaticamente
+- Certifique-se de que a imagem está em boa qualidade
+- Os ícones devem ser quadrados (mesma largura e altura)
 
