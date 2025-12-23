@@ -11,6 +11,7 @@ interface Movie {
   release_date: string;
   overview: string;
   genre_ids: number[];
+  imdb_id?: string;
   watch_providers?: {
     logo_path: string;
     provider_name: string;
@@ -30,20 +31,29 @@ interface TVShow {
   }[];
 }
 
+interface Actor {
+  id: number;
+  name: string;
+  profile_path: string | null;
+  known_for_department?: string;
+}
+
 interface HomeProps {
   upcomingMovies: Movie[];
   popularMovies: Movie[];
   tvShows: TVShow[];
   onMovieClick: (movie: Movie, movieList: Movie[]) => void;
   onTVShowClick: (show: TVShow) => void;
+  onActorClick: (actor: { id: number; name: string; profile_path: string | null }) => void;
   apiKey: string;
 }
 
-export function Home({ upcomingMovies, popularMovies, tvShows, onMovieClick, onTVShowClick, apiKey }: HomeProps) {
+export function Home({ upcomingMovies, popularMovies, tvShows, onMovieClick, onTVShowClick, onActorClick, apiKey }: HomeProps) {
   const imageBaseUrl = 'https://image.tmdb.org/t/p/w300';
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Movie[]>([]);
   const [searchTVResults, setSearchTVResults] = useState<TVShow[]>([]);
+  const [searchActorResults, setSearchActorResults] = useState<Actor[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   
   // Get movies releasing this week
@@ -77,30 +87,61 @@ export function Home({ upcomingMovies, popularMovies, tvShows, onMovieClick, onT
   useEffect(() => {
     if (searchQuery) {
       setIsSearching(true);
+      
+      // Buscar filmes
       fetch(`https://api.themoviedb.org/3/search/movie?api_key=${apiKey}&query=${searchQuery}&language=pt-BR`)
         .then(response => response.json())
-        .then(data => {
-          setSearchResults(data.results || []);
-          setIsSearching(false);
+        .then(async (data) => {
+          const movies = data.results || [];
+          // Buscar imdb_id para cada filme
+          const moviesWithImdb = await Promise.all(
+            movies.slice(0, 20).map(async (movie: Movie) => {
+              try {
+                const detailsResponse = await fetch(
+                  `https://api.themoviedb.org/3/movie/${movie.id}?api_key=${apiKey}`
+                );
+                const details = await detailsResponse.json();
+                return { ...movie, imdb_id: details.imdb_id };
+              } catch {
+                return movie;
+              }
+            })
+          );
+          setSearchResults(moviesWithImdb);
         })
         .catch(error => {
           console.error('Error fetching search results:', error);
-          setIsSearching(false);
+          setSearchResults([]);
         });
 
+      // Buscar séries
       fetch(`https://api.themoviedb.org/3/search/tv?api_key=${apiKey}&query=${searchQuery}&language=pt-BR`)
         .then(response => response.json())
         .then(data => {
           setSearchTVResults(data.results || []);
+        })
+        .catch(error => {
+          console.error('Error fetching TV search results:', error);
+          setSearchTVResults([]);
+        });
+
+      // Buscar atores/atrizes
+      fetch(`https://api.themoviedb.org/3/search/person?api_key=${apiKey}&query=${searchQuery}&language=pt-BR`)
+        .then(response => response.json())
+        .then(data => {
+          setSearchActorResults(data.results || []);
           setIsSearching(false);
         })
         .catch(error => {
-          console.error('Error fetching search results:', error);
+          console.error('Error fetching actor search results:', error);
+          setSearchActorResults([]);
           setIsSearching(false);
         });
     } else {
       setSearchResults([]);
       setSearchTVResults([]);
+      setSearchActorResults([]);
+      setIsSearching(false);
     }
   }, [searchQuery, apiKey]);
 
@@ -179,7 +220,7 @@ export function Home({ upcomingMovies, popularMovies, tvShows, onMovieClick, onT
                         {movie.title}
                       </h3>
                       
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-['Montserrat:Bold',sans-serif] text-[#6416ff] text-[10px] px-2 py-0.5 bg-[#6416ff]/20 rounded-full">
                           FILME
                         </span>
@@ -187,6 +228,17 @@ export function Home({ upcomingMovies, popularMovies, tvShows, onMovieClick, onT
                           <p className="font-['Montserrat:Regular',sans-serif] text-white/60 text-[12px]">
                             {new Date(movie.release_date).getFullYear()}
                           </p>
+                        )}
+                        {movie.imdb_id && (
+                          <a
+                            href={`https://www.imdb.com/title/${movie.imdb_id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="font-['Montserrat:Regular',sans-serif] text-[#ffa500] text-[11px] hover:underline"
+                          >
+                            IMDb
+                          </a>
                         )}
                       </div>
                       
@@ -265,7 +317,59 @@ export function Home({ upcomingMovies, popularMovies, tvShows, onMovieClick, onT
             </>
           )}
 
-          {searchResults.length === 0 && searchTVResults.length === 0 && !isSearching && (
+          {/* Actors Results */}
+          {searchActorResults.length > 0 && (
+            <>
+              <div className="px-6 mb-4">
+                <h2 className="font-['Montserrat:Bold',sans-serif] text-white text-[20px]">
+                  Atores e Atrizes
+                </h2>
+                <p className="font-['Montserrat:Light',sans-serif] text-white/60 text-[13px] mt-1">
+                  {searchActorResults.length} {searchActorResults.length === 1 ? 'resultado' : 'resultados'}
+                </p>
+              </div>
+              
+              <div className="px-6 space-y-3 pb-6">
+                {searchActorResults.slice(0, 20).map((actor) => (
+                  <button
+                    key={`actor-${actor.id}`}
+                    onClick={() => onActorClick({ id: actor.id, name: actor.name, profile_path: actor.profile_path })}
+                    className="w-full bg-white/10 backdrop-blur-md rounded-[10px] p-3 flex gap-3 hover:bg-white/20 transition-all"
+                  >
+                    {/* Profile photo */}
+                    <div className="w-[60px] h-[60px] rounded-full overflow-hidden bg-[#d9d9d9] shrink-0">
+                      {actor.profile_path ? (
+                        <ImageWithFallback
+                          src={`${imageBaseUrl}${actor.profile_path}`}
+                          alt={actor.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-white/30 text-[10px] bg-[#6416ff]/20">
+                          {actor.name.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Actor info */}
+                    <div className="flex-1 flex flex-col items-start gap-1 text-left">
+                      <h3 className="font-['Montserrat:SemiBold',sans-serif] text-white text-[15px]">
+                        {actor.name}
+                      </h3>
+                      
+                      {actor.known_for_department && (
+                        <p className="font-['Montserrat:Regular',sans-serif] text-white/60 text-[12px]">
+                          {actor.known_for_department === 'Acting' ? 'Ator/Atriz' : actor.known_for_department}
+                        </p>
+                      )}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+
+          {searchResults.length === 0 && searchTVResults.length === 0 && searchActorResults.length === 0 && !isSearching && (
             <div className="text-center py-8">
               <p className="font-['Montserrat:Regular',sans-serif] text-white/60 text-[14px]">
                 Nenhum resultado encontrado

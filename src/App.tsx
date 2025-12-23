@@ -565,6 +565,7 @@ export default function App() {
           tvShows={tvShows}
           onMovieClick={handleHomeMovieClick}
           onTVShowClick={setSelectedTVShow}
+          onActorClick={setSelectedActor}
           apiKey={TMDB_API_KEY}
         />
         <Navbar 
