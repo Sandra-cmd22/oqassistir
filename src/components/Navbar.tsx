@@ -1,0 +1,51 @@
+import { Home, List, Compass, Heart } from 'lucide-react';
+
+interface NavbarProps {
+  currentView: 'home' | 'swiper' | 'list' | 'favorites';
+  onNavigate: (view: 'home' | 'swiper' | 'list' | 'favorites') => void;
+  hasActiveFilters: boolean;
+  favoritesCount: number;
+}
+
+export function Navbar({ currentView, onNavigate, hasActiveFilters, favoritesCount }: NavbarProps) {
+  const navItems = [
+    { id: 'home' as const, icon: Home, label: 'Explore' },
+    { id: 'swiper' as const, icon: Compass, label: 'Descobrir' },
+    { id: 'favorites' as const, icon: Heart, label: 'Favoritos' },
+    { id: 'list' as const, icon: List, label: 'Lista' },
+  ];
+
+  return (
+    <nav className="fixed bottom-0 left-0 right-0 bg-black/40 backdrop-blur-xl border-t border-white/10 px-4 py-3 flex items-center justify-around z-20">
+      {navItems.map((item) => {
+        const Icon = item.icon;
+        const isActive = currentView === item.id;
+        
+        return (
+          <button
+            key={item.id}
+            onClick={() => onNavigate(item.id)}
+            className={`flex flex-col items-center gap-1 px-6 py-2 rounded-xl transition-all ${
+              isActive 
+                ? 'bg-white/20 text-white' 
+                : 'text-white/60 hover:text-white hover:bg-white/10'
+            }`}
+          >
+            <div className="relative">
+              <Icon className={`w-6 h-6 ${isActive ? 'stroke-[2.5]' : 'stroke-2'}`} />
+              {item.id === 'list' && hasActiveFilters && (
+                <div className="absolute -top-1 -right-1 w-2 h-2 bg-white rounded-full" />
+              )}
+              {item.id === 'favorites' && favoritesCount > 0 && (
+                <div className="absolute -top-1 -right-1 w-2 h-2 bg-white rounded-full" />
+              )}
+            </div>
+            <span className={`text-[11px] font-['Montserrat:${isActive ? 'SemiBold' : 'Regular'}',sans-serif]`}>
+              {item.label}
+            </span>
+          </button>
+        );
+      })}
+    </nav>
+  );
+}
