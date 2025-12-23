@@ -77,6 +77,7 @@ interface TVShow {
 export default function App() {
   const [movies, setMovies] = useState<Movie[]>([]);
   const [popularMovies, setPopularMovies] = useState<Movie[]>([]);
+  const [nowPlayingMovies, setNowPlayingMovies] = useState<Movie[]>([]);
   const [tvShows, setTVShows] = useState<TVShow[]>([]);
   const [favorites, setFavorites] = useState<number[]>([]);
   const [tvFavorites, setTVFavorites] = useState<number[]>([]);
@@ -298,12 +299,73 @@ export default function App() {
           console.error('Error fetching popular movies:', error);
           setPopularMovies(moviesWithCredits.slice(0, 10));
         }
+
+        // Fetch now playing movies (em cartaz)
+        try {
+          const nowPlayingResponse = await fetch(
+            `${TMDB_BASE_URL}/movie/now_playing?api_key=${TMDB_API_KEY}&language=pt-BR&page=1&region=BR`
+          );
+          const nowPlayingData = await nowPlayingResponse.json();
+          
+          // Fetch credits and details for now playing movies
+          const nowPlayingWithCredits = await Promise.all(
+            (nowPlayingData.results || []).slice(0, 20).map(async (movie: Movie) => {
+              try {
+                const creditsResponse = await fetch(
+                  `${TMDB_BASE_URL}/movie/${movie.id}/credits?api_key=${TMDB_API_KEY}`
+                );
+                const creditsData = await creditsResponse.json();
+                
+                // Fetch videos (trailers)
+                const videosResponse = await fetch(
+                  `${TMDB_BASE_URL}/movie/${movie.id}/videos?api_key=${TMDB_API_KEY}&language=pt-BR`
+                );
+                const videosData = await videosResponse.json();
+                
+                // Find official trailer
+                const trailer = videosData.results?.find(
+                  (video: any) => video.type === 'Trailer' && video.site === 'YouTube'
+                );
+                
+                // Fetch watch providers
+                const providersResponse = await fetch(
+                  `${TMDB_BASE_URL}/movie/${movie.id}/watch/providers?api_key=${TMDB_API_KEY}`
+                );
+                const providersData = await providersResponse.json();
+                
+                // Get Brazil providers (flatrate = streaming)
+                const brProviders = providersData.results?.BR?.flatrate || [];
+                const watchProviders = brProviders.slice(0, 3).map((provider: any) => ({
+                  logo_path: provider.logo_path,
+                  provider_name: provider.provider_name
+                }));
+                
+                return {
+                  ...movie,
+                  trailer_key: trailer?.key,
+                  watch_providers: watchProviders.length > 0 ? watchProviders : undefined,
+                  credits: {
+                    cast: creditsData.cast.slice(0, 4)
+                  }
+                };
+              } catch {
+                return movie;
+              }
+            })
+          );
+          
+          setNowPlayingMovies(nowPlayingWithCredits);
+        } catch (error) {
+          console.error('Error fetching now playing movies:', error);
+          setNowPlayingMovies([]);
+        }
       } catch (error) {
         console.error('Error fetching movies:', error);
         // Fallback to mock data if API fails
         const mockMovies = getMockMovies();
         setMovies(mockMovies);
         setPopularMovies(mockMovies.slice(0, 3));
+        setNowPlayingMovies([]);
       } finally {
         setLoading(false);
       }
@@ -562,6 +624,7 @@ export default function App() {
         <Home 
           upcomingMovies={movies} 
           popularMovies={popularMovies}
+          nowPlayingMovies={nowPlayingMovies}
           tvShows={tvShows}
           onMovieClick={handleHomeMovieClick}
           onTVShowClick={setSelectedTVShow}

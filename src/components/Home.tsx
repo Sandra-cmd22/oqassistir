@@ -41,6 +41,7 @@ interface Actor {
 interface HomeProps {
   upcomingMovies: Movie[];
   popularMovies: Movie[];
+  nowPlayingMovies: Movie[];
   tvShows: TVShow[];
   onMovieClick: (movie: Movie, movieList: Movie[]) => void;
   onTVShowClick: (show: TVShow) => void;
@@ -48,7 +49,7 @@ interface HomeProps {
   apiKey: string;
 }
 
-export function Home({ upcomingMovies, popularMovies, tvShows, onMovieClick, onTVShowClick, onActorClick, apiKey }: HomeProps) {
+export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, tvShows, onMovieClick, onTVShowClick, onActorClick, apiKey }: HomeProps) {
   const imageBaseUrl = 'https://image.tmdb.org/t/p/w300';
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Movie[]>([]);
@@ -376,6 +377,46 @@ export function Home({ upcomingMovies, popularMovies, tvShows, onMovieClick, onT
               </p>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Now Playing Section */}
+      {!searchQuery && nowPlayingMovies.length > 0 && (
+        <div className="mb-8">
+          <div className="px-6 mb-4 flex items-center gap-2">
+            <h2 className="font-['Montserrat:Bold',sans-serif] text-white text-[20px]">
+              🎬 Em Cartaz
+            </h2>
+          </div>
+          
+          <div className="flex gap-4 overflow-x-auto scrollbar-hide px-6 pb-2">
+            {nowPlayingMovies.map((movie) => (
+              <button
+                key={movie.id}
+                onClick={() => onMovieClick(movie, nowPlayingMovies)}
+                className="shrink-0 w-[140px] group"
+              >
+                <div className="relative mb-2 rounded-[10px] overflow-hidden bg-[#d9d9d9] aspect-[2/3] shadow-lg group-active:opacity-80 transition-opacity">
+                  {movie.poster_path ? (
+                    <ImageWithFallback
+                      src={`${imageBaseUrl}${movie.poster_path}`}
+                      alt={movie.title}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-white/30 text-[12px]">
+                      N/A
+                    </div>
+                  )}
+                  {/* Streaming providers badge */}
+                  {movie.watch_providers && <StreamingBadge providers={movie.watch_providers} />}
+                </div>
+                <h3 className="font-['Montserrat:SemiBold',sans-serif] text-white text-[13px] line-clamp-2 text-left h-[36px]">
+                  {movie.title}
+                </h3>
+              </button>
+            ))}
+          </div>
         </div>
       )}
 
