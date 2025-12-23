@@ -1,12 +1,13 @@
 {
-  "name": "CineBuzz - Próximos Lançamentos",
-  "short_name": "CineBuzz",
+  "name": "Oq Assistir - Próximos Lançamentos",
+  "short_name": "Oq Assistir",
   "description": "Descubra os próximos lançamentos de filmes com informações completas",
   "start_url": "/",
-  "display": "standalone",
+  "display": "fullscreen",
   "background_color": "#000000",
-  "theme_color": "#5f5476",
+  "theme_color": "#000000",
   "orientation": "portrait",
+  "scope": "/",
   "icons": [
     {
       "src": "/icon-192.png",
