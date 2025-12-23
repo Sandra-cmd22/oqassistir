@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gerar Ícones PWA</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #0a0a0f;
+      color: white;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    canvas {
+      border: 1px solid #333;
+      margin: 10px;
+      background: #0a0a0f;
+    }
+    button {
+      background: #6416FF;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 5px;
+    }
+    button:hover {
+      background: #7a2fff;
+    }
+    .logo-container {
+      width: 192px;
+      height: 192px;
+      background: #0a0a0f;
+      padding: 20px;
+      display: inline-block;
+      margin: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Gerador de Ícones PWA - Oq Assistir</h1>
+    <p>Esta página gera os ícones PNG a partir da logo SVG.</p>
+    
+    <div id="logo-container"></div>
+    
+    <div>
+      <button onclick="generateIcon(192)">Gerar ícone 192x192</button>
+      <button onclick="generateIcon(512)">Gerar ícone 512x512</button>
+    </div>
+    
+    <div id="canvases"></div>
+  </div>
+
+  <script>
+    // Renderizar a logo SVG
+    const logoSVG = `
+      <svg width="192" height="192" viewBox="0 0 44.3318 11.7791" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <style>
+            .film-strip { fill: white; }
+            .film-hole { fill: black; }
+            .oq-text { fill: #6416FF; }
+            .assistir-text { fill: white; }
+          </style>
+        </defs>
+        <g transform="translate(74, 90)">
+          <!-- Film Strip -->
+          <rect class="film-strip" height="4.67305" transform="matrix(0.993633 -0.112667 0.157846 0.987464 0 6.06817)" width="43.8736" />
+          <!-- Film Holes (simplificado) -->
+          <rect class="film-hole" x="5" y="2" width="8" height="2" />
+          <rect class="film-hole" x="15" y="2" width="8" height="2" />
+          <rect class="film-hole" x="25" y="2" width="8" height="2" />
+          <rect class="film-hole" x="35" y="2" width="8" height="2" />
+          
+          <!-- "Oq" Text (simplificado) -->
+          <text class="oq-text" x="5" y="12" font-size="8" font-weight="bold">Oq</text>
+          
+          <!-- "Assistir" Text (simplificado) -->
+          <text class="assistir-text" x="2" y="20" font-size="6">Assistir</text>
+        </g>
+      </svg>
+    `;
+    
+    function generateIcon(size) {
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      
+      // Fundo com cor do tema
+      ctx.fillStyle = '#0a0a0f';
+      ctx.fillRect(0, 0, size, size);
+      
+      // Renderizar logo SVG no centro
+      const img = new Image();
+      const svgBlob = new Blob([logoSVG], { type: 'image/svg+xml' });
+      const url = URL.createObjectURL(svgBlob);
+      
+      img.onload = () => {
+        // Calcular posição centralizada
+        const scale = size / 192;
+        const logoWidth = 44.3318 * scale * 2;
+        const logoHeight = 11.7791 * scale * 2;
+        const x = (size - logoWidth) / 2;
+        const y = (size - logoHeight) / 2;
+        
+        ctx.drawImage(img, x, y, logoWidth, logoHeight);
+        
+        // Adicionar canvas à página
+        const container = document.getElementById('canvases');
+        const wrapper = document.createElement('div');
+        wrapper.style.textAlign = 'center';
+        wrapper.innerHTML = `
+          <p>Ícone ${size}x${size}</p>
+          <canvas id="canvas-${size}" width="${size}" height="${size}"></canvas>
+          <br>
+          <button onclick="downloadIcon(${size})">Baixar ícone ${size}x${size}</button>
+        `;
+        const newCanvas = wrapper.querySelector(`#canvas-${size}`);
+        newCanvas.getContext('2d').drawImage(canvas, 0, 0);
+        container.appendChild(wrapper);
+        
+        // Salvar canvas globalmente
+        window[`canvas${size}`] = canvas;
+        
+        URL.revokeObjectURL(url);
+      };
+      
+      img.src = url;
+    }
+    
+    function downloadIcon(size) {
+      const canvas = window[`canvas${size}`];
+      if (!canvas) {
+        alert('Gere o ícone primeiro!');
+        return;
+      }
+      
+      canvas.toBlob((blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `icon-${size}.png`;
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+    }
+    
+    // Renderizar preview da logo
+    document.getElementById('logo-container').innerHTML = logoSVG;
+  </script>
+</body>
+</html>
+
