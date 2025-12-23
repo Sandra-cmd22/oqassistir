@@ -109,7 +109,7 @@ export function Home({ upcomingMovies, popularMovies, tvShows, onMovieClick, onT
       {/* Header */}
       <div className="px-6 pt-8 pb-4">
         {/* Logo */}
-        <div className="h-[26px] w-[44px] mb-[15px]">
+        <div className="h-[36px] w-[60px] mb-[15px]">
           <Group7 />
         </div>
         
