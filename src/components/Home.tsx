@@ -163,7 +163,7 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
         : null)
     : null;
   
-  const formatDate = (dateString: string) => {
+  const formatDateLong = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });
   };
@@ -230,7 +230,7 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
             </h2>
             {featuredMovie.release_date && (
               <p className="text-white/80 text-[14px] mb-4 font-['Montserrat:Regular',sans-serif]">
-                {formatDate(featuredMovie.release_date)}
+                {formatDateLong(featuredMovie.release_date)}
               </p>
             )}
             <button
