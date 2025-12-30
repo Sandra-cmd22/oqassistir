@@ -1,5 +1,5 @@
 import { ImageWithFallback } from './figma/ImageWithFallback';
-import { Heart, Calendar, Play } from 'lucide-react';
+import { Heart, Calendar, Play, Bookmark } from 'lucide-react';
 
 interface Movie {
   id: number;
@@ -16,9 +16,11 @@ interface FavoritesProps {
   genres: { [key: number]: string };
   onMovieClick: (movie: Movie) => void;
   onToggleFavorite: (movieId: number) => void;
+  watchedMovies: number[];
+  onToggleWatched: (movieId: number) => void;
 }
 
-export function Favorites({ movies, genres, onMovieClick, onToggleFavorite }: FavoritesProps) {
+export function Favorites({ movies, genres, onMovieClick, onToggleFavorite, watchedMovies, onToggleWatched }: FavoritesProps) {
   const imageBaseUrl = 'https://image.tmdb.org/t/p/w500';
 
   // Sort movies by release_date (most recent first)
@@ -68,8 +70,28 @@ export function Favorites({ movies, genres, onMovieClick, onToggleFavorite }: Fa
             return (
               <div
                 key={movie.id}
-                className="bg-white/10 backdrop-blur-md rounded-[16px] overflow-hidden shadow-lg"
+                className="bg-white/10 backdrop-blur-md rounded-[16px] overflow-hidden shadow-lg relative"
               >
+                {/* Watched Bookmark - Top Right */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onToggleWatched(movie.id);
+                  }}
+                  className={`absolute top-3 right-3 z-10 w-10 h-10 rounded-full backdrop-blur-xl flex items-center justify-center shadow-lg transition-all active:scale-95 ${
+                    watchedMovies.includes(movie.id)
+                      ? 'bg-[#04FFA7] border-2 border-[#04FFA7]'
+                      : 'bg-white/10 border border-white/20'
+                  }`}
+                >
+                  <Bookmark 
+                    className={`w-5 h-5 transition-colors ${
+                      watchedMovies.includes(movie.id) ? 'text-white fill-white' : 'text-white/60'
+                    }`}
+                    strokeWidth={2.5}
+                  />
+                </button>
+
                 <div className="flex gap-4 p-4">
                   {/* Poster */}
                   <button

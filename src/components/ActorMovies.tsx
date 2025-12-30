@@ -192,9 +192,9 @@ export function ActorMovies({ actor, apiKey, onClose, onMovieClick }: ActorMovie
               <button
                 key={movie.id}
                 onClick={() => handleMovieClick(movie)}
-                className="group"
+                className="group flex flex-col items-start"
               >
-                <div className="relative mb-2 rounded-[10px] overflow-hidden bg-[#d9d9d9] aspect-[2/3] shadow-lg group-hover:scale-105 transition-transform">
+                <div className="relative mb-2 rounded-[10px] overflow-hidden bg-[#d9d9d9] aspect-[2/3] shadow-lg group-hover:scale-105 transition-transform w-full">
                   {movie.poster_path ? (
                     <ImageWithFallback
                       src={`${imageBaseUrl}${movie.poster_path}`}
@@ -208,13 +208,15 @@ export function ActorMovies({ actor, apiKey, onClose, onMovieClick }: ActorMovie
                   )}
                 </div>
                 
-                <h3 className="font-['Montserrat:SemiBold',sans-serif] text-white text-[13px] line-clamp-2 text-left mb-1">
-                  {movie.title}
-                </h3>
-                
-                <p className="font-['Montserrat:Regular',sans-serif] text-white/60 text-[11px] text-left">
-                  {formatDate(movie.release_date)}
-                </p>
+                <div className="w-full flex flex-col gap-1">
+                  <h3 className="font-['Montserrat:SemiBold',sans-serif] text-white text-[13px] line-clamp-2 text-left leading-tight h-[36px] flex items-start">
+                    {movie.title}
+                  </h3>
+                  
+                  <p className="font-['Montserrat:Regular',sans-serif] text-white/60 text-[11px] text-left">
+                    {formatDate(movie.release_date)}
+                  </p>
+                </div>
               </button>
             ))}
           </div>

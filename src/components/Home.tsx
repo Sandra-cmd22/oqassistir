@@ -41,6 +41,26 @@ interface Actor {
   known_for_department?: string;
 }
 
+interface Collection {
+  id: number;
+  name: string;
+  poster_path: string | null;
+  backdrop_path: string | null;
+  overview?: string;
+}
+
+interface Company {
+  id: number;
+  name: string;
+  logo_path: string | null;
+  origin_country?: string;
+}
+
+interface Keyword {
+  id: number;
+  name: string;
+}
+
 interface HomeProps {
   upcomingMovies: Movie[];
   popularMovies: Movie[];
@@ -51,15 +71,25 @@ interface HomeProps {
   onTVShowClick: (show: TVShow) => void;
   onActorClick: (actor: { id: number; name: string; profile_path: string | null }) => void;
   apiKey: string;
+  genres?: { [key: number]: string };
 }
 
-export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgicMovies, tvShows, onMovieClick, onTVShowClick, onActorClick, apiKey }: HomeProps) {
+export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgicMovies, tvShows, onMovieClick, onTVShowClick, onActorClick, apiKey, genres = {} }: HomeProps) {
   const imageBaseUrl = 'https://image.tmdb.org/t/p/w300';
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Movie[]>([]);
   const [searchTVResults, setSearchTVResults] = useState<TVShow[]>([]);
   const [searchActorResults, setSearchActorResults] = useState<Actor[]>([]);
+  const [searchCollectionResults, setSearchCollectionResults] = useState<Collection[]>([]);
+  const [searchCompanyResults, setSearchCompanyResults] = useState<Company[]>([]);
+  const [searchKeywordResults, setSearchKeywordResults] = useState<Keyword[]>([]);
+  const [genreSearchResults, setGenreSearchResults] = useState<Movie[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [showAllNowPlaying, setShowAllNowPlaying] = useState(false);
+  const [showAllThisWeek, setShowAllThisWeek] = useState(false);
+  const [showAllNostalgic, setShowAllNostalgic] = useState(false);
+  const [showAllPopular, setShowAllPopular] = useState(false);
+  const [showAllTVShows, setShowAllTVShows] = useState(false);
   
   // Get movies releasing this week
   const today = new Date();
@@ -92,6 +122,12 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
   useEffect(() => {
     if (searchQuery) {
       setIsSearching(true);
+      
+      // Verificar se a busca corresponde a um gênero
+      const genreMatch = Object.entries(genres).find(([_, name]) => 
+        name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+        searchQuery.toLowerCase().includes(name.toLowerCase())
+      );
       
       // Buscar filmes
       fetch(`https://api.themoviedb.org/3/search/movie?api_key=${apiKey}&query=${searchQuery}&language=pt-BR`)
@@ -135,20 +171,88 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
         .then(response => response.json())
         .then(data => {
           setSearchActorResults(data.results || []);
-          setIsSearching(false);
         })
         .catch(error => {
           console.error('Error fetching actor search results:', error);
           setSearchActorResults([]);
-          setIsSearching(false);
         });
+
+      // Buscar coleções
+      fetch(`https://api.themoviedb.org/3/search/collection?api_key=${apiKey}&query=${searchQuery}&language=pt-BR`)
+        .then(response => response.json())
+        .then(data => {
+          setSearchCollectionResults(data.results || []);
+        })
+        .catch(error => {
+          console.error('Error fetching collection search results:', error);
+          setSearchCollectionResults([]);
+        });
+
+      // Buscar empresas
+      fetch(`https://api.themoviedb.org/3/search/company?api_key=${apiKey}&query=${searchQuery}`)
+        .then(response => response.json())
+        .then(data => {
+          setSearchCompanyResults(data.results || []);
+        })
+        .catch(error => {
+          console.error('Error fetching company search results:', error);
+          setSearchCompanyResults([]);
+        });
+
+      // Buscar palavras-chave
+      fetch(`https://api.themoviedb.org/3/search/keyword?api_key=${apiKey}&query=${searchQuery}`)
+        .then(response => response.json())
+        .then(data => {
+          setSearchKeywordResults(data.results || []);
+        })
+        .catch(error => {
+          console.error('Error fetching keyword search results:', error);
+          setSearchKeywordResults([]);
+        });
+
+      // Se encontrou um gênero, buscar filmes desse gênero
+      if (genreMatch) {
+        const genreId = parseInt(genreMatch[0]);
+        fetch(`https://api.themoviedb.org/3/discover/movie?api_key=${apiKey}&language=pt-BR&with_genres=${genreId}&sort_by=popularity.desc&page=1`)
+          .then(response => response.json())
+          .then(async (data) => {
+            const movies = data.results || [];
+            const moviesWithImdb = await Promise.all(
+              movies.slice(0, 20).map(async (movie: Movie) => {
+                try {
+                  const detailsResponse = await fetch(
+                    `https://api.themoviedb.org/3/movie/${movie.id}?api_key=${apiKey}`
+                  );
+                  const details = await detailsResponse.json();
+                  return { ...movie, imdb_id: details.imdb_id };
+                } catch {
+                  return movie;
+                }
+              })
+            );
+            setGenreSearchResults(moviesWithImdb);
+            setIsSearching(false);
+          })
+          .catch(error => {
+            console.error('Error fetching genre movies:', error);
+            setGenreSearchResults([]);
+            setIsSearching(false);
+          });
+      } else {
+        setGenreSearchResults([]);
+        setIsSearching(false);
+      }
     } else {
       setSearchResults([]);
       setSearchTVResults([]);
       setSearchActorResults([]);
+      setSearchCollectionResults([]);
+      setSearchCompanyResults([]);
+      setSearchKeywordResults([]);
+      setGenreSearchResults([]);
       setIsSearching(false);
     }
-  }, [searchQuery, apiKey]);
+  }, [searchQuery, apiKey, genres]);
 
   // Featured movie para o header destacado
   const featuredMovie = !searchQuery && (popularMovies.length > 0 || upcomingMovies.length > 0)
@@ -172,10 +276,9 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
     <div className="bg-gradient-to-br from-[#0a0a0f] via-[#1a0f2e] to-[#2d1b3d] min-h-screen overflow-y-auto scrollbar-hide pb-[72px]">
       {/* Header */}
       <div className="px-6 pt-8 pb-4">
-        {/* Logo e Explore na mesma linha */}
-        <div className="flex items-center mb-[15px]">
-          {/* Logo */}
-          <div className="h-[48px] w-auto">
+        {/* Logo */}
+        <div className="mb-[15px]">
+          <div className="h-[36px] w-auto mb-3">
             <img 
               src={logoImage} 
               alt="OQ Assistir" 
@@ -183,16 +286,19 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
             />
           </div>
           
-          {/* Explore centralizado com ajuste para esquerda */}
-          <div className="flex-1 flex justify-center">
-            <h1 className="text-[28px] -ml-[24px]" style={{ color: '#00D98B', fontFamily: 'Poppins, sans-serif', fontWeight: 900 }}>
-              Explore
-            </h1>
-          </div>
+          {/* Explore abaixo da logo */}
+          <h1 className="text-[28px] text-white" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 900 }}>
+            Explore
+          </h1>
         </div>
-        <p className="font-['Montserrat:Light',sans-serif] text-white/70 text-[14px] mb-4">
-          Descubra os melhores lançamentos
-        </p>
+        
+        {/* Descrição com ícone de pipoca */}
+        <div className="flex items-center gap-2 mb-4">
+          <p className="font-['Montserrat:Light',sans-serif] text-white/70 text-[14px]">
+            Escolha o filme perfeito para hoje
+          </p>
+          <span className="text-[16px]">🍿</span>
+        </div>
 
         {/* Search Input Premium */}
         <div className="relative">
@@ -435,7 +541,192 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
             </>
           )}
 
-          {searchResults.length === 0 && searchTVResults.length === 0 && searchActorResults.length === 0 && !isSearching && (
+          {/* Genre Search Results */}
+          {genreSearchResults.length > 0 && (
+            <>
+              <div className="px-6 mb-4">
+                <h2 className="text-white text-[20px]" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 900 }}>
+                  Filmes por Gênero
+                </h2>
+                <p className="font-['Montserrat:Light',sans-serif] text-white/60 text-[13px] mt-1">
+                  {genreSearchResults.length} {genreSearchResults.length === 1 ? 'resultado' : 'resultados'}
+                </p>
+              </div>
+              
+              <div className="px-6 space-y-3 pb-6">
+                {genreSearchResults.slice(0, 20).map((movie) => (
+                  <button
+                    key={`genre-movie-${movie.id}`}
+                    onClick={() => onMovieClick(movie, genreSearchResults)}
+                    className="w-full bg-white/10 backdrop-blur-md rounded-[10px] p-3 flex gap-3 hover:bg-white/20 transition-all group hover:scale-[1.02] active:scale-[0.98]"
+                  >
+                    <div className="w-[60px] h-[90px] rounded-[6px] overflow-hidden bg-[#d9d9d9] shrink-0">
+                      {movie.poster_path ? (
+                        <ImageWithFallback
+                          src={`${imageBaseUrl}${movie.poster_path}`}
+                          alt={movie.title}
+                          className="w-full h-full object-cover transition-opacity duration-300"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-white/30 text-[10px]">
+                          N/A
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 flex flex-col items-start gap-1 text-left">
+                      <h3 className="font-['Montserrat:SemiBold',sans-serif] text-white text-[15px] line-clamp-2">
+                        {movie.title}
+                      </h3>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-['Montserrat:Bold',sans-serif] text-[#6416ff] text-[10px] px-2 py-0.5 bg-[#6416ff]/20 rounded-full">
+                          FILME
+                        </span>
+                        {movie.release_date && (
+                          <p className="font-['Montserrat:Regular',sans-serif] text-white/60 text-[12px]">
+                            {new Date(movie.release_date).getFullYear()}
+                          </p>
+                        )}
+                      </div>
+                      {movie.overview && (
+                        <p className="font-['Montserrat:Light',sans-serif] text-white/80 text-[12px] line-clamp-2">
+                          {movie.overview}
+                        </p>
+                      )}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+
+          {/* Collections Results */}
+          {searchCollectionResults.length > 0 && (
+            <>
+              <div className="px-6 mb-4">
+                <h2 className="text-white text-[20px]" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 900 }}>
+                  Coleções
+                </h2>
+                <p className="font-['Montserrat:Light',sans-serif] text-white/60 text-[13px] mt-1">
+                  {searchCollectionResults.length} {searchCollectionResults.length === 1 ? 'resultado' : 'resultados'}
+                </p>
+              </div>
+              
+              <div className="px-6 space-y-3 pb-6">
+                {searchCollectionResults.slice(0, 10).map((collection) => (
+                  <div
+                    key={`collection-${collection.id}`}
+                    className="w-full bg-white/10 backdrop-blur-md rounded-[10px] p-3 flex gap-3"
+                  >
+                    <div className="w-[60px] h-[90px] rounded-[6px] overflow-hidden bg-[#d9d9d9] shrink-0">
+                      {collection.poster_path ? (
+                        <ImageWithFallback
+                          src={`${imageBaseUrl}${collection.poster_path}`}
+                          alt={collection.name}
+                          className="w-full h-full object-cover transition-opacity duration-300"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-white/30 text-[10px]">
+                          N/A
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 flex flex-col items-start gap-1 text-left">
+                      <h3 className="font-['Montserrat:SemiBold',sans-serif] text-white text-[15px] line-clamp-2">
+                        {collection.name}
+                      </h3>
+                      <span className="font-['Montserrat:Bold',sans-serif] text-[#00D98B] text-[10px] px-2 py-0.5 bg-[#00D98B]/20 rounded-full">
+                        COLEÇÃO
+                      </span>
+                      {collection.overview && (
+                        <p className="font-['Montserrat:Light',sans-serif] text-white/80 text-[12px] line-clamp-2">
+                          {collection.overview}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+          {/* Companies Results */}
+          {searchCompanyResults.length > 0 && (
+            <>
+              <div className="px-6 mb-4">
+                <h2 className="text-white text-[20px]" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 900 }}>
+                  Empresas de Produção
+                </h2>
+                <p className="font-['Montserrat:Light',sans-serif] text-white/60 text-[13px] mt-1">
+                  {searchCompanyResults.length} {searchCompanyResults.length === 1 ? 'resultado' : 'resultados'}
+                </p>
+              </div>
+              
+              <div className="px-6 space-y-3 pb-6">
+                {searchCompanyResults.slice(0, 10).map((company) => (
+                  <div
+                    key={`company-${company.id}`}
+                    className="w-full bg-white/10 backdrop-blur-md rounded-[10px] p-3 flex gap-3"
+                  >
+                    <div className="w-[60px] h-[60px] rounded-[6px] overflow-hidden bg-white/10 shrink-0 flex items-center justify-center">
+                      {company.logo_path ? (
+                        <ImageWithFallback
+                          src={`https://image.tmdb.org/t/p/w200${company.logo_path}`}
+                          alt={company.name}
+                          className="w-full h-full object-contain p-2"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-white/30 text-[10px]">
+                          {company.name.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 flex flex-col items-start gap-1 text-left">
+                      <h3 className="font-['Montserrat:SemiBold',sans-serif] text-white text-[15px]">
+                        {company.name}
+                      </h3>
+                      <span className="font-['Montserrat:Bold',sans-serif] text-[#ff6416] text-[10px] px-2 py-0.5 bg-[#ff6416]/20 rounded-full">
+                        EMPRESA
+                      </span>
+                      {company.origin_country && (
+                        <p className="font-['Montserrat:Regular',sans-serif] text-white/60 text-[12px]">
+                          {company.origin_country}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+          {/* Keywords Results */}
+          {searchKeywordResults.length > 0 && (
+            <>
+              <div className="px-6 mb-4">
+                <h2 className="text-white text-[20px]" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 900 }}>
+                  Palavras-chave
+                </h2>
+                <p className="font-['Montserrat:Light',sans-serif] text-white/60 text-[13px] mt-1">
+                  {searchKeywordResults.length} {searchKeywordResults.length === 1 ? 'resultado' : 'resultados'}
+                </p>
+              </div>
+              
+              <div className="px-6 flex flex-wrap gap-2 pb-6">
+                {searchKeywordResults.slice(0, 20).map((keyword) => (
+                  <span
+                    key={`keyword-${keyword.id}`}
+                    className="bg-white/10 backdrop-blur-md rounded-full px-4 py-2 text-white text-[13px] font-['Montserrat:Regular',sans-serif]"
+                  >
+                    {keyword.name}
+                  </span>
+                ))}
+              </div>
+            </>
+          )}
+
+          {searchResults.length === 0 && searchTVResults.length === 0 && searchActorResults.length === 0 && 
+           genreSearchResults.length === 0 && searchCollectionResults.length === 0 && 
+           searchCompanyResults.length === 0 && searchKeywordResults.length === 0 && !isSearching && (
             <div className="text-center py-8">
               <p className="font-['Montserrat:Regular',sans-serif] text-white/60 text-[14px]">
                 Nenhum resultado encontrado
@@ -451,15 +742,23 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
       )}
       {!searchQuery && nowPlayingMovies.length > 0 && (
         <div className="mb-8">
-          <div className="px-6 mb-4 flex items-center gap-2">
-            <FilmStrip className="w-4 h-4 text-white/50" weight="regular" />
-            <h2 className="text-white text-[20px]" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 900 }}>
-              Em Cartaz
-            </h2>
+          <div className="px-6 mb-4 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <FilmStrip className="w-5 h-5" style={{ color: '#F4F2F2' }} weight="fill" />
+              <h2 className="text-white text-[20px]" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 900 }}>
+                Em Cartaz
+              </h2>
+            </div>
+            <button 
+              onClick={() => setShowAllNowPlaying(!showAllNowPlaying)}
+              className="text-white/60 text-[12px] font-['Montserrat:Regular',sans-serif] hover:text-white transition-colors"
+            >
+              {showAllNowPlaying ? 'Ver menos' : 'Ver tudo'}
+            </button>
           </div>
           
-          <div className="flex gap-4 overflow-x-auto scrollbar-hide px-6 pb-2 scroll-smooth">
-            {nowPlayingMovies.map((movie) => (
+          <div className={`flex gap-4 ${showAllNowPlaying ? 'flex-wrap px-6' : 'overflow-x-auto scrollbar-hide px-6 pb-2 scroll-smooth'}`}>
+            {(showAllNowPlaying ? nowPlayingMovies : nowPlayingMovies.slice(0, 10)).map((movie) => (
               <button
                 key={movie.id}
                 onClick={() => onMovieClick(movie, nowPlayingMovies)}
@@ -492,15 +791,23 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
       {/* This Week Section */}
       {!searchQuery && filteredThisWeekMovies.length > 0 && (
         <div className="mb-8">
-          <div className="px-6 mb-4 flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-white/50" weight="regular" />
-            <h2 className="text-white text-[20px]" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 900 }}>
-              Lançamentos da Semana
-            </h2>
+          <div className="px-6 mb-4 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Calendar className="w-5 h-5" style={{ color: '#F4F2F2' }} weight="fill" />
+              <h2 className="text-white text-[20px]" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 900 }}>
+                Lançamentos da Semana
+              </h2>
+            </div>
+            <button 
+              onClick={() => setShowAllThisWeek(!showAllThisWeek)}
+              className="text-white/60 text-[12px] font-['Montserrat:Regular',sans-serif] hover:text-white transition-colors"
+            >
+              {showAllThisWeek ? 'Ver menos' : 'Ver tudo'}
+            </button>
           </div>
           
-          <div className="flex gap-4 overflow-x-auto scrollbar-hide px-6 pb-2 scroll-smooth">
-            {filteredThisWeekMovies.map((movie) => (
+          <div className={`flex gap-4 ${showAllThisWeek ? 'flex-wrap px-6' : 'overflow-x-auto scrollbar-hide px-6 pb-2 scroll-smooth'}`}>
+            {(showAllThisWeek ? filteredThisWeekMovies : filteredThisWeekMovies.slice(0, 10)).map((movie) => (
               <button
                 key={movie.id}
                 onClick={() => onMovieClick(movie, thisWeekMovies)}
@@ -539,18 +846,26 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
       {/* Nostalgic Movies Section - Indicações para ver em casa */}
       {!searchQuery && nostalgicMovies.length > 0 && (
         <div className="mb-8">
-          <div className="px-6 mb-4 flex items-center gap-2">
-            <House className="w-4 h-4 text-white/50" weight="regular" />
-            <h2 className="text-white text-[20px]" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 900 }}>
-              Nostalgia - Ver em casa
-            </h2>
+          <div className="px-6 mb-4 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <House className="w-5 h-5" style={{ color: '#F4F2F2' }} weight="fill" />
+              <h2 className="text-white text-[20px]" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 900 }}>
+                Nostalgia - Ver em casa
+              </h2>
+            </div>
+            <button 
+              onClick={() => setShowAllNostalgic(!showAllNostalgic)}
+              className="text-white/60 text-[12px] font-['Montserrat:Regular',sans-serif] hover:text-white transition-colors"
+            >
+              {showAllNostalgic ? 'Ver menos' : 'Ver tudo'}
+            </button>
           </div>
           <p className="px-6 mb-4 font-['Montserrat:Light',sans-serif] text-white/60 text-[12px]">
             Clássicos e filmes antigos que mudam toda semana
           </p>
           
-          <div className="flex gap-4 overflow-x-auto scrollbar-hide px-6 pb-2 scroll-smooth">
-            {nostalgicMovies.map((movie) => (
+          <div className={`flex gap-4 ${showAllNostalgic ? 'flex-wrap px-6' : 'overflow-x-auto scrollbar-hide px-6 pb-2 scroll-smooth'}`}>
+            {(showAllNostalgic ? nostalgicMovies : nostalgicMovies.slice(0, 10)).map((movie) => (
               <button
                 key={movie.id}
                 onClick={() => onMovieClick(movie, nostalgicMovies)}
@@ -591,14 +906,20 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
       {/* Popular Movies Section */}
       {!searchQuery && filteredPopularMovies.length > 0 && (
         <div className="mb-8">
-          <div className="px-6 mb-4 flex items-center gap-2">
+          <div className="px-6 mb-4 flex items-center justify-between">
             <h2 className="text-white text-[20px]" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 900 }}>
               Mais Populares
             </h2>
+            <button 
+              onClick={() => setShowAllPopular(!showAllPopular)}
+              className="text-white/60 text-[12px] font-['Montserrat:Regular',sans-serif] hover:text-white transition-colors"
+            >
+              {showAllPopular ? 'Ver menos' : 'Ver tudo'}
+            </button>
           </div>
           
-          <div className="flex gap-4 overflow-x-auto scrollbar-hide px-6 pb-2 scroll-smooth">
-            {filteredPopularMovies.map((movie) => (
+          <div className={`flex gap-4 ${showAllPopular ? 'flex-wrap px-6' : 'overflow-x-auto scrollbar-hide px-6 pb-2 scroll-smooth'}`}>
+            {(showAllPopular ? filteredPopularMovies : filteredPopularMovies.slice(0, 10)).map((movie) => (
               <button
                 key={movie.id}
                 onClick={() => onMovieClick(movie, popularMovies)}
@@ -631,15 +952,23 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
       {/* TV Shows Section */}
       {!searchQuery && tvShows.length > 0 && (
         <div className="mb-8">
-          <div className="px-6 mb-4 flex items-center gap-2">
-            <Television className="w-4 h-4 text-white/50" weight="regular" />
-            <h2 className="text-white text-[20px]" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 900 }}>
-              Séries no Ar
-            </h2>
+          <div className="px-6 mb-4 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Television className="w-5 h-5" style={{ color: '#F4F2F2' }} weight="fill" />
+              <h2 className="text-white text-[20px]" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 900 }}>
+                Séries no Ar
+              </h2>
+            </div>
+            <button 
+              onClick={() => setShowAllTVShows(!showAllTVShows)}
+              className="text-white/60 text-[12px] font-['Montserrat:Regular',sans-serif] hover:text-white transition-colors"
+            >
+              {showAllTVShows ? 'Ver menos' : 'Ver tudo'}
+            </button>
           </div>
           
-          <div className="flex gap-4 overflow-x-auto scrollbar-hide px-6 pb-2 scroll-smooth">
-            {tvShows.map((show) => (
+          <div className={`flex gap-4 ${showAllTVShows ? 'flex-wrap px-6' : 'overflow-x-auto scrollbar-hide px-6 pb-2 scroll-smooth'}`}>
+            {(showAllTVShows ? tvShows : tvShows.slice(0, 10)).map((show) => (
               <button
                 key={show.id}
                 onClick={() => onTVShowClick(show)}

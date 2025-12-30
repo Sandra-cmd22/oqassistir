@@ -490,7 +490,7 @@ export function RandomMovie({ apiKey, genres, onMovieClick, onToggleFavorite, fa
   return (
     <div className="bg-gradient-to-br from-[#0a0a0f] via-[#1a0f2e] to-[#2d1b3d] min-h-screen overflow-y-auto scrollbar-hide pb-[72px]">
       <div className="px-6 pt-8 pb-6">
-        <h1 className="text-white text-[28px] mb-2" style={{ color: '#00D98B', fontFamily: 'Poppins, sans-serif', fontWeight: 900 }}>
+        <h1 className="text-white text-[28px] mb-2" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 900 }}>
           Não sei o que assistir
         </h1>
         <p className="font-['Montserrat:Light',sans-serif] text-white/70 text-[14px] mb-6">
@@ -559,10 +559,10 @@ export function RandomMovie({ apiKey, genres, onMovieClick, onToggleFavorite, fa
         <button
           onClick={handleSuggestMovie}
           disabled={isLoading}
-          className="w-full bg-gradient-to-r from-[#6416ff] to-[#04FFA7] text-white font-['Montserrat:Bold',sans-serif] text-[18px] py-5 rounded-[16px] flex items-center justify-center gap-3 hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed mb-6 shadow-[0_0_20px_rgba(4,255,167,0.4)] hover:shadow-[0_0_30px_rgba(4,255,167,0.6)] active:scale-[0.98]"
+          className="w-full bg-white text-[#0a0a0f] font-['Montserrat:Bold',sans-serif] text-[18px] h-[48px] rounded-[12px] flex items-center justify-center gap-3 hover:bg-white/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed mb-6 shadow-lg hover:shadow-xl active:scale-[0.98]"
         >
-          <Shuffle className="w-7 h-7" weight="fill" />
-          {isLoading ? 'Buscando...' : 'Sugestão quero assim'}
+          <Shuffle className="w-7 h-7 text-[#0a0a0f]" weight="fill" />
+          {isLoading ? 'Buscando...' : 'escolhe pra mim'}
         </button>
 
         {/* Filme Sugerido */}

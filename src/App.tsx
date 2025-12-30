@@ -87,6 +87,7 @@ export default function App() {
   const [tvShows, setTVShows] = useState<TVShow[]>([]);
   const [favorites, setFavorites] = useState<number[]>([]);
   const [tvFavorites, setTVFavorites] = useState<number[]>([]);
+  const [watchedMovies, setWatchedMovies] = useState<number[]>([]);
   const [filteredMovies, setFilteredMovies] = useState<Movie[]>([]);
   const [selectedMonth, setSelectedMonth] = useState<number | null>(null);
   const [selectedGenres, setSelectedGenres] = useState<number[]>([]);
@@ -445,6 +446,11 @@ export default function App() {
     if (savedTVFavorites) {
       setTVFavorites(JSON.parse(savedTVFavorites));
     }
+    
+    const savedWatched = localStorage.getItem('watchedMovies');
+    if (savedWatched) {
+      setWatchedMovies(JSON.parse(savedWatched));
+    }
   }, []);
 
   // Save favorites to localStorage
@@ -456,6 +462,11 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('tvFavorites', JSON.stringify(tvFavorites));
   }, [tvFavorites]);
+
+  // Save watched movies to localStorage
+  useEffect(() => {
+    localStorage.setItem('watchedMovies', JSON.stringify(watchedMovies));
+  }, [watchedMovies]);
 
   // Fetch TV Shows
   useEffect(() => {
@@ -628,6 +639,16 @@ export default function App() {
   };
   
   // Toggle TV favorite
+  const toggleWatched = (movieId: number) => {
+    setWatchedMovies(prev => {
+      if (prev.includes(movieId)) {
+        return prev.filter(id => id !== movieId);
+      } else {
+        return [...prev, movieId];
+      }
+    });
+  };
+
   const toggleTVFavorite = (showId: number) => {
     setTVFavorites(prev => {
       if (prev.includes(showId)) {
@@ -742,8 +763,8 @@ export default function App() {
           description={seoDescription}
           image={seoImage}
         />
-        <Home 
-          upcomingMovies={movies} 
+        <Home
+          upcomingMovies={movies}
           popularMovies={popularMovies}
           nowPlayingMovies={nowPlayingMovies}
           nostalgicMovies={nostalgicMovies}
@@ -752,6 +773,7 @@ export default function App() {
           onTVShowClick={setSelectedTVShow}
           onActorClick={setSelectedActor}
           apiKey={TMDB_API_KEY}
+          genres={genres}
         />
         <Navbar 
           currentView={currentView}
@@ -836,6 +858,8 @@ export default function App() {
             genres={genres}
             onMovieClick={(movie) => handleHomeMovieClick(movie, favoriteMovies)}
             onToggleFavorite={toggleFavorite}
+            watchedMovies={watchedMovies}
+            onToggleWatched={toggleWatched}
           />
           <Navbar 
             currentView={currentView}
@@ -864,7 +888,7 @@ export default function App() {
       <div className="bg-black/30 backdrop-blur-md border-b border-white/10 px-4 py-3 flex items-center justify-between sticky top-0 z-10">
         <div className="w-10"></div>
         
-        <h1 className="text-[28px]" style={{ color: '#00D98B', fontFamily: 'Poppins, sans-serif', fontWeight: 900 }}>
+        <h1 className="text-[28px] text-white" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 900 }}>
           {currentView === 'swiper' ? 'Descobrir' : 'Próximos Lançamentos'}
         </h1>
         
