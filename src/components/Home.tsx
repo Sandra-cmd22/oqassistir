@@ -1,8 +1,9 @@
 import { useState, useMemo, useEffect } from 'react';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { Search, Loader2 } from 'lucide-react';
+import { FilmStrip, Calendar, House, Television } from 'phosphor-react';
 import { StreamingBadge } from './StreamingBadge';
-import Group7 from '../imports/Group7';
+import logoImage from '../assets/logomovie.png';
 
 interface Movie {
   id: number;
@@ -42,6 +43,7 @@ interface HomeProps {
   upcomingMovies: Movie[];
   popularMovies: Movie[];
   nowPlayingMovies: Movie[];
+  nostalgicMovies: Movie[];
   tvShows: TVShow[];
   onMovieClick: (movie: Movie, movieList: Movie[]) => void;
   onTVShowClick: (show: TVShow) => void;
@@ -49,7 +51,7 @@ interface HomeProps {
   apiKey: string;
 }
 
-export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, tvShows, onMovieClick, onTVShowClick, onActorClick, apiKey }: HomeProps) {
+export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgicMovies, tvShows, onMovieClick, onTVShowClick, onActorClick, apiKey }: HomeProps) {
   const imageBaseUrl = 'https://image.tmdb.org/t/p/w300';
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Movie[]>([]);
@@ -152,10 +154,14 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, tvShows,
       <div className="px-6 pt-8 pb-4">
         {/* Logo */}
         <div className="h-[36px] w-[60px] mb-[15px]">
-          <Group7 />
+          <img 
+            src={logoImage} 
+            alt="OQ Assistir" 
+            className="w-full h-full object-contain"
+          />
         </div>
         
-        <h1 className="font-['Montserrat:Black',sans-serif] text-white text-[28px] mb-2">
+        <h1 className="font-['Montserrat:Black',sans-serif] text-[28px] mb-2" style={{ color: '#04FFA7' }}>
           Explore
         </h1>
         <p className="font-['Montserrat:Light',sans-serif] text-white/70 text-[14px] mb-4">
@@ -384,8 +390,9 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, tvShows,
       {!searchQuery && nowPlayingMovies.length > 0 && (
         <div className="mb-8">
           <div className="px-6 mb-4 flex items-center gap-2">
+            <FilmStrip className="w-6 h-6 text-white" weight="fill" />
             <h2 className="font-['Montserrat:Bold',sans-serif] text-white text-[20px]">
-              🎬 Em Cartaz
+              Em Cartaz
             </h2>
           </div>
           
@@ -424,7 +431,7 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, tvShows,
       {!searchQuery && filteredThisWeekMovies.length > 0 && (
         <div className="mb-8">
           <div className="px-6 mb-4 flex items-center gap-2">
-            <StreamingBadge />
+            <Calendar className="w-6 h-6 text-white" weight="fill" />
             <h2 className="font-['Montserrat:Bold',sans-serif] text-white text-[20px]">
               Lançamentos da Semana
             </h2>
@@ -457,6 +464,58 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, tvShows,
                       {formatDate(movie.release_date)}
                     </p>
                   </div>
+                </div>
+                <h3 className="font-['Montserrat:SemiBold',sans-serif] text-white text-[13px] line-clamp-2 text-left h-[36px]">
+                  {movie.title}
+                </h3>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Nostalgic Movies Section - Indicações para ver em casa */}
+      {!searchQuery && nostalgicMovies.length > 0 && (
+        <div className="mb-8">
+          <div className="px-6 mb-4 flex items-center gap-2">
+            <House className="w-6 h-6 text-white" weight="fill" />
+            <h2 className="font-['Montserrat:Bold',sans-serif] text-white text-[20px]">
+              Nostalgia - Ver em casa
+            </h2>
+          </div>
+          <p className="px-6 mb-4 font-['Montserrat:Light',sans-serif] text-white/60 text-[12px]">
+            Clássicos e filmes antigos que mudam toda semana
+          </p>
+          
+          <div className="flex gap-4 overflow-x-auto scrollbar-hide px-6 pb-2">
+            {nostalgicMovies.map((movie) => (
+              <button
+                key={movie.id}
+                onClick={() => onMovieClick(movie, nostalgicMovies)}
+                className="shrink-0 w-[140px] group"
+              >
+                <div className="relative mb-2 rounded-[10px] overflow-hidden bg-[#d9d9d9] aspect-[2/3] shadow-lg group-active:opacity-80 transition-opacity">
+                  {movie.poster_path ? (
+                    <ImageWithFallback
+                      src={`${imageBaseUrl}${movie.poster_path}`}
+                      alt={movie.title}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-white/30 text-[12px]">
+                      N/A
+                    </div>
+                  )}
+                  {/* Streaming providers badge */}
+                  {movie.watch_providers && <StreamingBadge providers={movie.watch_providers} />}
+                  {/* Year badge for nostalgic movies */}
+                  {movie.release_date && (
+                    <div className="absolute top-2 right-2 bg-[#6416ff]/90 backdrop-blur-sm rounded-[6px] px-2 py-1">
+                      <p className="font-['Montserrat:Bold',sans-serif] text-white text-[10px]">
+                        {new Date(movie.release_date).getFullYear()}
+                      </p>
+                    </div>
+                  )}
                 </div>
                 <h3 className="font-['Montserrat:SemiBold',sans-serif] text-white text-[13px] line-clamp-2 text-left h-[36px]">
                   {movie.title}
@@ -511,6 +570,7 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, tvShows,
       {!searchQuery && tvShows.length > 0 && (
         <div className="mb-8">
           <div className="px-6 mb-4 flex items-center gap-2">
+            <Television className="w-6 h-6 text-white" weight="fill" />
             <h2 className="font-['Montserrat:Bold',sans-serif] text-white text-[20px]">
               Séries no Ar
             </h2>

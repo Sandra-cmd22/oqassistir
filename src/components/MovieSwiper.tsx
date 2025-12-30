@@ -1,5 +1,7 @@
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { usePosterColors } from '../hooks/usePosterColors';
+import { useSimilarMovies } from '../hooks/useSimilarMovies';
+import { SimilarMovies } from './SimilarMovies';
 import { Heart, ChevronLeft, ChevronRight, Play } from 'lucide-react';
 
 interface Movie {
@@ -27,9 +29,11 @@ interface MovieSwiperProps {
   onActorClick: (actor: { id: number; name: string; profile_path: string | null }) => void;
   favorites: number[];
   onToggleFavorite: (movieId: number) => void;
+  apiKey: string;
+  onMovieClick: (movie: Movie, movieList: Movie[]) => void;
 }
 
-export function MovieSwiper({ movies, genres, currentIndex, onIndexChange, onActorClick, favorites, onToggleFavorite }: MovieSwiperProps) {
+export function MovieSwiper({ movies, genres, currentIndex, onIndexChange, onActorClick, favorites, onToggleFavorite, apiKey, onMovieClick }: MovieSwiperProps) {
   const imageBaseUrl = 'https://image.tmdb.org/t/p/w500';
   const currentMovie = movies[currentIndex];
   
@@ -38,6 +42,13 @@ export function MovieSwiper({ movies, genres, currentIndex, onIndexChange, onAct
     ? `${imageBaseUrl}${currentMovie.poster_path}` 
     : null;
   const colors = usePosterColors(posterUrl);
+
+  // Buscar filmes similares
+  const { similarMovies, loading: loadingSimilar } = useSimilarMovies({
+    movieId: currentMovie?.id || null,
+    apiKey,
+    maxResults: 10,
+  });
 
   if (!currentMovie) {
     return (
@@ -234,6 +245,29 @@ export function MovieSwiper({ movies, genres, currentIndex, onIndexChange, onAct
                 ))}
               </div>
             </div>
+          )}
+
+          {/* Similar Movies */}
+          {similarMovies.length > 0 && (
+            <SimilarMovies
+              movies={similarMovies.filter(movie => !movies.some(m => m.id === movie.id))}
+              genres={genres}
+              loading={loadingSimilar}
+              onMovieClick={(movie) => {
+                // Verifica se o filme já está na lista
+                const existingIndex = movies.findIndex(m => m.id === movie.id);
+                if (existingIndex >= 0) {
+                  // Se já está na lista, apenas navega para ele
+                  onIndexChange(existingIndex);
+                } else {
+                  // Adiciona o filme similar à lista e navega para ele
+                  const updatedMovies = [...movies, movie];
+                  const newIndex = updatedMovies.length - 1;
+                  onMovieClick(movie, updatedMovies);
+                  onIndexChange(newIndex);
+                }
+              }}
+            />
           )}
 
           {/* Movie indicator */}

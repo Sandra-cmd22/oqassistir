@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
 import { Home } from './components/Home';
 import { MovieSwiper } from './components/MovieSwiper';
-import { UpcomingList } from './components/UpcomingList';
+import { CinemaNews, NewsArticle } from './components/CinemaNews';
+import { NewsDetail } from './components/NewsDetail';
 import { FilterPanel } from './components/FilterPanel';
 import { InstallPrompt } from './components/InstallPrompt';
 import { Navbar } from './components/Navbar';
 import { ActorMovies } from './components/ActorMovies';
 import { Favorites } from './components/Favorites';
 import { TVShowViewer } from './components/TVShowViewer';
+import { SplashScreen } from './components/SplashScreen';
 import { Loader2, SlidersHorizontal } from 'lucide-react';
 
 /**
@@ -75,9 +77,11 @@ interface TVShow {
 }
 
 export default function App() {
+  const [showSplash, setShowSplash] = useState(true);
   const [movies, setMovies] = useState<Movie[]>([]);
   const [popularMovies, setPopularMovies] = useState<Movie[]>([]);
   const [nowPlayingMovies, setNowPlayingMovies] = useState<Movie[]>([]);
+  const [nostalgicMovies, setNostalgicMovies] = useState<Movie[]>([]);
   const [tvShows, setTVShows] = useState<TVShow[]>([]);
   const [favorites, setFavorites] = useState<number[]>([]);
   const [tvFavorites, setTVFavorites] = useState<number[]>([]);
@@ -87,7 +91,8 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [genres, setGenres] = useState<{ [key: number]: string }>({});
   const [currentMovieIndex, setCurrentMovieIndex] = useState(0);
-  const [currentView, setCurrentView] = useState<'home' | 'swiper' | 'list' | 'favorites'>('home');
+  const [currentView, setCurrentView] = useState<'home' | 'swiper' | 'news' | 'favorites' | 'newsDetail'>('home');
+  const [selectedNewsArticle, setSelectedNewsArticle] = useState<NewsArticle | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [currentMovieList, setCurrentMovieList] = useState<Movie[]>([]);
   const [selectedActor, setSelectedActor] = useState<{ id: number; name: string; profile_path: string | null } | null>(null);
@@ -359,6 +364,59 @@ export default function App() {
           console.error('Error fetching now playing movies:', error);
           setNowPlayingMovies([]);
         }
+
+        // Fetch nostalgic/classic movies (rotates weekly)
+        try {
+          // Calculate week number of the year for rotation
+          const now = new Date();
+          const start = new Date(now.getFullYear(), 0, 1);
+          const days = Math.floor((now.getTime() - start.getTime()) / (24 * 60 * 60 * 1000));
+          const weekNumber = Math.ceil((days + start.getDay() + 1) / 7);
+          
+          // Use week number to calculate page offset (10 movies per week, ~100 movies per page)
+          // We'll fetch from different pages based on week number to get variety
+          const pageOffset = (weekNumber % 10) + 1; // Rotate between pages 1-10
+          
+          // Fetch classic/old movies (released before 2000, with good ratings)
+          const nostalgicResponse = await fetch(
+            `${TMDB_BASE_URL}/discover/movie?api_key=${TMDB_API_KEY}&language=pt-BR&sort_by=popularity.desc&primary_release_date.lte=1999-12-31&vote_average.gte=7&vote_count.gte=100&page=${pageOffset}`
+          );
+          const nostalgicData = await nostalgicResponse.json();
+          
+          if (nostalgicData.results && nostalgicData.results.length > 0) {
+            // Take first 10 movies and fetch their details
+            const nostalgicWithDetails = await Promise.all(
+              nostalgicData.results.slice(0, 10).map(async (movie: Movie) => {
+                try {
+                  // Fetch watch providers
+                  const providersResponse = await fetch(
+                    `${TMDB_BASE_URL}/movie/${movie.id}/watch/providers?api_key=${TMDB_API_KEY}`
+                  );
+                  const providersData = await providersResponse.json();
+                  
+                  // Get Brazil providers (flatrate = streaming)
+                  const brProviders = providersData.results?.BR?.flatrate || [];
+                  const watchProviders = brProviders.slice(0, 3).map((provider: any) => ({
+                    logo_path: provider.logo_path,
+                    provider_name: provider.provider_name
+                  }));
+                  
+                  return {
+                    ...movie,
+                    watch_providers: watchProviders
+                  };
+                } catch {
+                  return movie;
+                }
+              })
+            );
+            
+            setNostalgicMovies(nostalgicWithDetails);
+          }
+        } catch (error) {
+          console.error('Error fetching nostalgic movies:', error);
+          setNostalgicMovies([]);
+        }
       } catch (error) {
         console.error('Error fetching movies:', error);
         // Fallback to mock data if API fails
@@ -537,7 +595,7 @@ export default function App() {
     setCurrentMovieIndex(0);
   };
 
-  const handleNavigation = (view: 'home' | 'swiper' | 'list' | 'favorites') => {
+  const handleNavigation = (view: 'home' | 'swiper' | 'news' | 'favorites' | 'newsDetail') => {
     setCurrentView(view);
     setCurrentMovieIndex(0);
     setSelectedTVShow(null); // Clear TV show view when navigating
@@ -548,6 +606,13 @@ export default function App() {
   };
 
   const hasActiveFilters = selectedMonth !== null || selectedGenres.length > 0;
+
+  // If newsDetail view but no article, redirect back to news
+  useEffect(() => {
+    if (currentView === 'newsDetail' && !selectedNewsArticle) {
+      setCurrentView('news');
+    }
+  }, [currentView, selectedNewsArticle]);
 
   // Toggle favorite
   const toggleFavorite = (movieId: number) => {
@@ -570,6 +635,11 @@ export default function App() {
       }
     });
   };
+
+  // Show Splash Screen
+  if (showSplash) {
+    return <SplashScreen onFinish={() => setShowSplash(false)} />;
+  }
 
   // Show Actor Movies view
   if (selectedActor) {
@@ -617,6 +687,34 @@ export default function App() {
     );
   }
 
+  // Show News Detail view - Check this BEFORE any other view checks
+  // Must check before home/favorites/return to ensure proper rendering
+  if (currentView === 'newsDetail' && selectedNewsArticle) {
+    return (
+      <>
+        <NewsDetail 
+          article={selectedNewsArticle}
+          onBack={() => {
+            setCurrentView('news');
+            setSelectedNewsArticle(null);
+          }}
+        />
+        <Navbar 
+          currentView="news"
+          onNavigate={(view) => {
+            if (view !== 'newsDetail') {
+              handleNavigation(view);
+              setSelectedNewsArticle(null);
+            }
+          }}
+          hasActiveFilters={hasActiveFilters}
+          favoritesCount={favorites.length + tvFavorites.length}
+        />
+        <InstallPrompt />
+      </>
+    );
+  }
+
   // Show Home view
   if (currentView === 'home') {
     return (
@@ -625,6 +723,7 @@ export default function App() {
           upcomingMovies={movies} 
           popularMovies={popularMovies}
           nowPlayingMovies={nowPlayingMovies}
+          nostalgicMovies={nostalgicMovies}
           tvShows={tvShows}
           onMovieClick={handleHomeMovieClick}
           onTVShowClick={setSelectedTVShow}
@@ -651,7 +750,7 @@ export default function App() {
         <Favorites
           movies={favoriteMovies}
           genres={genres}
-          onMovieClick={handleHomeMovieClick}
+          onMovieClick={(movie) => handleHomeMovieClick(movie, favoriteMovies)}
           onToggleFavorite={toggleFavorite}
         />
         <Navbar 
@@ -676,47 +775,58 @@ export default function App() {
         </div>
       )}
       
-      {/* Header */}
-      <div className="bg-black/30 backdrop-blur-md border-b border-white/10 px-4 py-3 flex items-center justify-between sticky top-0 z-10">
-        <div className="w-10"></div>
-        
-        <h1 className="font-['Montserrat:Bold',sans-serif] text-white text-[18px]">
-          {currentView === 'swiper' ? 'Descobrir' : 'Próximos Lançamentos'}
-        </h1>
-        
-        <button
-          onClick={() => setShowFilters(true)}
-          className="p-2 hover:bg-white/10 rounded-full transition-all relative"
-        >
-          <SlidersHorizontal className="w-5 h-5 text-white" />
-          {hasActiveFilters && (
-            <div className="absolute top-1 right-1 w-2 h-2 bg-white rounded-full" />
+      {/* Header - Only show for non-newsDetail views */}
+      {currentView !== 'newsDetail' && (
+        <div className="bg-black/30 backdrop-blur-md border-b border-white/10 px-4 py-3 flex items-center justify-between sticky top-0 z-10">
+          <div className="w-10"></div>
+          
+          <h1 className="font-['Montserrat:Bold',sans-serif] text-white text-[18px]">
+            {currentView === 'swiper' ? 'Descobrir' : currentView === 'news' ? 'Notícias' : 'Próximos Lançamentos'}
+          </h1>
+          
+          {currentView !== 'news' && currentView !== 'newsDetail' && (
+            <button
+              onClick={() => setShowFilters(true)}
+              className="p-2 hover:bg-white/10 rounded-full transition-all relative"
+            >
+              <SlidersHorizontal className="w-5 h-5 text-white" />
+              {hasActiveFilters && (
+                <div className="absolute top-1 right-1 w-2 h-2 bg-white rounded-full" />
+              )}
+            </button>
           )}
-        </button>
-      </div>
+          {currentView === 'news' && <div className="w-10"></div>}
+        </div>
+      )}
 
-      {/* Main Content */}
-      <div className="flex-1 overflow-hidden pb-[72px]">
-        {currentView === 'swiper' ? (
-          <MovieSwiper
-            movies={currentMovieList.length > 0 ? currentMovieList : filteredMovies}
-            genres={genres}
-            currentIndex={currentMovieIndex}
-            onIndexChange={setCurrentMovieIndex}
-            onActorClick={setSelectedActor}
-            favorites={favorites}
-            onToggleFavorite={toggleFavorite}
-          />
-        ) : (
-          <div className="h-full overflow-y-auto scrollbar-hide">
-            <UpcomingList
-              movies={filteredMovies}
+      {/* Main Content - Only show for non-newsDetail views */}
+      {currentView !== 'newsDetail' && (
+        <div className="flex-1 overflow-hidden pb-[72px]">
+          {currentView === 'swiper' ? (
+            <MovieSwiper
+              movies={currentMovieList.length > 0 ? currentMovieList : filteredMovies}
               genres={genres}
-              onMovieClick={handleMovieClick}
+              currentIndex={currentMovieIndex}
+              onIndexChange={setCurrentMovieIndex}
+              onActorClick={setSelectedActor}
+              favorites={favorites}
+              onToggleFavorite={toggleFavorite}
+              apiKey={TMDB_API_KEY}
+              onMovieClick={handleHomeMovieClick}
             />
-          </div>
-        )}
-      </div>
+          ) : currentView === 'news' ? (
+            <div className="h-full overflow-y-auto scrollbar-hide">
+              <CinemaNews 
+                onArticleClick={(article) => {
+                  // Define o artigo e muda a view
+                  setSelectedNewsArticle(article);
+                  setCurrentView('newsDetail');
+                }}
+              />
+            </div>
+          ) : null}
+        </div>
+      )}
 
       {/* Navbar */}
       <Navbar 
