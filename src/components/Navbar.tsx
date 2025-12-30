@@ -1,8 +1,8 @@
-import { Home, Newspaper, Compass, Heart } from 'lucide-react';
+import { Home, Newspaper, Compass, Heart, Shuffle } from 'lucide-react';
 
 interface NavbarProps {
-  currentView: 'home' | 'swiper' | 'news' | 'favorites' | 'newsDetail';
-  onNavigate: (view: 'home' | 'swiper' | 'news' | 'favorites' | 'newsDetail') => void;
+  currentView: 'home' | 'swiper' | 'news' | 'favorites' | 'newsDetail' | 'random';
+  onNavigate: (view: 'home' | 'swiper' | 'news' | 'favorites' | 'newsDetail' | 'random') => void;
   hasActiveFilters: boolean;
   favoritesCount: number;
 }
@@ -11,12 +11,13 @@ export function Navbar({ currentView, onNavigate, hasActiveFilters, favoritesCou
   const navItems = [
     { id: 'home' as const, icon: Home, label: 'Explore' },
     { id: 'swiper' as const, icon: Compass, label: 'Descobrir' },
+    { id: 'random' as const, icon: Shuffle, label: 'Aleatório' },
     { id: 'favorites' as const, icon: Heart, label: 'Favoritos' },
     { id: 'news' as const, icon: Newspaper, label: 'Notícias' },
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-black/40 backdrop-blur-xl border-t border-white/10 px-4 py-3 flex items-center justify-around z-50 safe-area-inset-bottom" style={{ paddingBottom: 'calc(12px + env(safe-area-inset-bottom))' }}>
+    <nav className="fixed bottom-0 left-0 right-0 bg-black/40 backdrop-blur-xl border-t border-white/10 px-2 py-3 flex items-center justify-around z-50 safe-area-inset-bottom" style={{ paddingBottom: 'calc(12px + env(safe-area-inset-bottom))' }}>
       {navItems.map((item) => {
         const Icon = item.icon;
         const isActive = currentView === item.id;
@@ -25,7 +26,7 @@ export function Navbar({ currentView, onNavigate, hasActiveFilters, favoritesCou
           <button
             key={item.id}
             onClick={() => onNavigate(item.id)}
-            className={`flex flex-col items-center gap-1 px-6 py-2 rounded-xl transition-all ${
+            className={`flex flex-col items-center gap-1 px-2 py-2 rounded-xl transition-all flex-1 ${
               isActive 
                 ? 'text-white' 
                 : 'text-white/60 hover:text-white hover:bg-white/10'
@@ -41,7 +42,7 @@ export function Navbar({ currentView, onNavigate, hasActiveFilters, favoritesCou
               )}
             </div>
             <span 
-              className={`text-[11px] font-['Montserrat:${isActive ? 'SemiBold' : 'Regular'}',sans-serif]`}
+              className={`text-[10px] font-['Montserrat:${isActive ? 'SemiBold' : 'Regular'}',sans-serif] leading-tight`}
               style={isActive ? { color: '#04FFA7' } : undefined}
             >
               {item.label}

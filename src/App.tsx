@@ -10,6 +10,8 @@ import { ActorMovies } from './components/ActorMovies';
 import { Favorites } from './components/Favorites';
 import { TVShowViewer } from './components/TVShowViewer';
 import { SplashScreen } from './components/SplashScreen';
+import { RandomMovie } from './components/RandomMovie';
+import { SEO } from './components/SEO';
 import { Loader2, SlidersHorizontal } from 'lucide-react';
 
 /**
@@ -91,7 +93,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [genres, setGenres] = useState<{ [key: number]: string }>({});
   const [currentMovieIndex, setCurrentMovieIndex] = useState(0);
-  const [currentView, setCurrentView] = useState<'home' | 'swiper' | 'news' | 'favorites' | 'newsDetail'>('home');
+  const [currentView, setCurrentView] = useState<'home' | 'swiper' | 'news' | 'favorites' | 'newsDetail' | 'random'>('home');
   const [selectedNewsArticle, setSelectedNewsArticle] = useState<NewsArticle | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [currentMovieList, setCurrentMovieList] = useState<Movie[]>([]);
@@ -595,7 +597,7 @@ export default function App() {
     setCurrentMovieIndex(0);
   };
 
-  const handleNavigation = (view: 'home' | 'swiper' | 'news' | 'favorites' | 'newsDetail') => {
+  const handleNavigation = (view: 'home' | 'swiper' | 'news' | 'favorites' | 'newsDetail' | 'random') => {
     setCurrentView(view);
     setCurrentMovieIndex(0);
     setSelectedTVShow(null); // Clear TV show view when navigating
@@ -636,9 +638,25 @@ export default function App() {
     });
   };
 
+  // Meta tags SEO globais
+  const seoTitle = 'CineBuzz - Próximos Lançamentos';
+  const seoDescription = 'Descubra os próximos lançamentos de filmes, notícias do cinema e receba sugestões personalizadas baseadas no seu humor e momento.';
+  // Imagem de preview para compartilhamento (Open Graph)
+  // Usando o logo do app (logomovie.png) como imagem de preview
+  const seoImage = '/og-image.png'; // Logo copiado de src/assets/logomovie.png para public/og-image.png
+
   // Show Splash Screen
   if (showSplash) {
-    return <SplashScreen onFinish={() => setShowSplash(false)} />;
+    return (
+      <>
+        <SEO 
+          title={seoTitle}
+          description={seoDescription}
+          image={seoImage}
+        />
+        <SplashScreen onFinish={() => setShowSplash(false)} />
+      </>
+    );
   }
 
   // Show Actor Movies view
@@ -719,6 +737,11 @@ export default function App() {
   if (currentView === 'home') {
     return (
       <>
+        <SEO 
+          title={seoTitle}
+          description={seoDescription}
+          image={seoImage}
+        />
         <Home 
           upcomingMovies={movies} 
           popularMovies={popularMovies}
@@ -741,17 +764,21 @@ export default function App() {
     );
   }
 
-  // Show Favorites view
-  if (currentView === 'favorites') {
-    const favoriteMovies = movies.filter(movie => favorites.includes(movie.id));
-    
+  // Show Random Movie view
+  if (currentView === 'random') {
     return (
-      <div className="bg-gradient-to-br from-[#0a0a0f] via-[#1a0f2e] to-[#2d1b3d] min-h-screen flex flex-col">
-        <Favorites
-          movies={favoriteMovies}
+      <>
+        <SEO 
+          title="Não sei o que assistir - CineBuzz"
+          description="Receba sugestões personalizadas de filmes baseadas no seu humor e momento. Encontre o filme perfeito para assistir agora!"
+          image={seoImage}
+        />
+        <RandomMovie 
+          apiKey={TMDB_API_KEY}
           genres={genres}
-          onMovieClick={(movie) => handleHomeMovieClick(movie, favoriteMovies)}
+          onMovieClick={handleHomeMovieClick}
           onToggleFavorite={toggleFavorite}
+          favorites={favorites}
         />
         <Navbar 
           currentView={currentView}
@@ -760,7 +787,65 @@ export default function App() {
           favoritesCount={favorites.length + tvFavorites.length}
         />
         <InstallPrompt />
-      </div>
+      </>
+    );
+  }
+
+  // Show News view
+  if (currentView === 'news') {
+    return (
+      <>
+        <SEO 
+          title="Notícias do Cinema - CineBuzz"
+          description="Fique por dentro das últimas notícias do cinema, lançamentos, atores e muito mais!"
+          image={seoImage}
+        />
+        <div className="bg-gradient-to-br from-[#0a0a0f] via-[#1a0f2e] to-[#2d1b3d] min-h-screen flex flex-col">
+        <CinemaNews 
+          onArticleClick={(article) => {
+            setSelectedNewsArticle(article);
+            setCurrentView('newsDetail');
+          }}
+        />
+        <Navbar 
+          currentView={currentView}
+          onNavigate={handleNavigation}
+          hasActiveFilters={hasActiveFilters}
+          favoritesCount={favorites.length + tvFavorites.length}
+        />
+        <InstallPrompt />
+        </div>
+      </>
+    );
+  }
+
+  // Show Favorites view
+  if (currentView === 'favorites') {
+    const favoriteMovies = movies.filter(movie => favorites.includes(movie.id));
+    
+    return (
+      <>
+        <SEO 
+          title="Meus Favoritos - CineBuzz"
+          description="Veja seus filmes e séries favoritos salvos"
+          image={seoImage}
+        />
+        <div className="bg-gradient-to-br from-[#0a0a0f] via-[#1a0f2e] to-[#2d1b3d] min-h-screen flex flex-col">
+          <Favorites
+            movies={favoriteMovies}
+            genres={genres}
+            onMovieClick={(movie) => handleHomeMovieClick(movie, favoriteMovies)}
+            onToggleFavorite={toggleFavorite}
+          />
+          <Navbar 
+            currentView={currentView}
+            onNavigate={handleNavigation}
+            hasActiveFilters={hasActiveFilters}
+            favoritesCount={favorites.length + tvFavorites.length}
+          />
+          <InstallPrompt />
+        </div>
+      </>
     );
   }
 
@@ -775,58 +860,41 @@ export default function App() {
         </div>
       )}
       
-      {/* Header - Only show for non-newsDetail views */}
-      {currentView !== 'newsDetail' && (
-        <div className="bg-black/30 backdrop-blur-md border-b border-white/10 px-4 py-3 flex items-center justify-between sticky top-0 z-10">
-          <div className="w-10"></div>
-          
-          <h1 className="font-['Montserrat:Bold',sans-serif] text-white text-[18px]">
-            {currentView === 'swiper' ? 'Descobrir' : currentView === 'news' ? 'Notícias' : 'Próximos Lançamentos'}
-          </h1>
-          
-          {currentView !== 'news' && currentView !== 'newsDetail' && (
-            <button
-              onClick={() => setShowFilters(true)}
-              className="p-2 hover:bg-white/10 rounded-full transition-all relative"
-            >
-              <SlidersHorizontal className="w-5 h-5 text-white" />
-              {hasActiveFilters && (
-                <div className="absolute top-1 right-1 w-2 h-2 bg-white rounded-full" />
-              )}
-            </button>
+      {/* Header */}
+      <div className="bg-black/30 backdrop-blur-md border-b border-white/10 px-4 py-3 flex items-center justify-between sticky top-0 z-10">
+        <div className="w-10"></div>
+        
+        <h1 className="font-['Montserrat:Bold',sans-serif] text-white text-[18px]">
+          {currentView === 'swiper' ? 'Descobrir' : 'Próximos Lançamentos'}
+        </h1>
+        
+        <button
+          onClick={() => setShowFilters(true)}
+          className="p-2 hover:bg-white/10 rounded-full transition-all relative"
+        >
+          <SlidersHorizontal className="w-5 h-5 text-white" />
+          {hasActiveFilters && (
+            <div className="absolute top-1 right-1 w-2 h-2 bg-white rounded-full" />
           )}
-          {currentView === 'news' && <div className="w-10"></div>}
-        </div>
-      )}
+        </button>
+      </div>
 
-      {/* Main Content - Only show for non-newsDetail views */}
-      {currentView !== 'newsDetail' && (
-        <div className="flex-1 overflow-hidden pb-[72px]">
-          {currentView === 'swiper' ? (
-            <MovieSwiper
-              movies={currentMovieList.length > 0 ? currentMovieList : filteredMovies}
-              genres={genres}
-              currentIndex={currentMovieIndex}
-              onIndexChange={setCurrentMovieIndex}
-              onActorClick={setSelectedActor}
-              favorites={favorites}
-              onToggleFavorite={toggleFavorite}
-              apiKey={TMDB_API_KEY}
-              onMovieClick={handleHomeMovieClick}
-            />
-          ) : currentView === 'news' ? (
-            <div className="h-full overflow-y-auto scrollbar-hide">
-              <CinemaNews 
-                onArticleClick={(article) => {
-                  // Define o artigo e muda a view
-                  setSelectedNewsArticle(article);
-                  setCurrentView('newsDetail');
-                }}
-              />
-            </div>
-          ) : null}
-        </div>
-      )}
+      {/* Main Content */}
+      <div className="flex-1 overflow-hidden pb-[72px]">
+        {currentView === 'swiper' && (
+          <MovieSwiper
+            movies={currentMovieList.length > 0 ? currentMovieList : filteredMovies}
+            genres={genres}
+            currentIndex={currentMovieIndex}
+            onIndexChange={setCurrentMovieIndex}
+            onActorClick={setSelectedActor}
+            favorites={favorites}
+            onToggleFavorite={toggleFavorite}
+            apiKey={TMDB_API_KEY}
+            onMovieClick={handleHomeMovieClick}
+          />
+        )}
+      </div>
 
       {/* Navbar */}
       <Navbar 
