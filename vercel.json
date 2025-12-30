@@ -1,4 +1,5 @@
 {
+  "name": "oqassistir",
   "buildCommand": "npm run build",
   "outputDirectory": "build",
   "framework": "vite",

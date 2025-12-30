@@ -3,12 +3,14 @@ import { ImageWithFallback } from './figma/ImageWithFallback';
 import { Search, Loader2 } from 'lucide-react';
 import { FilmStrip, Calendar, House, Television } from 'phosphor-react';
 import { StreamingBadge } from './StreamingBadge';
+import { SkeletonSection } from './SkeletonCard';
 import logoImage from '../assets/logomovie.png';
 
 interface Movie {
   id: number;
   title: string;
   poster_path: string | null;
+  backdrop_path?: string | null;
   release_date: string;
   overview: string;
   genre_ids: number[];
@@ -148,41 +150,98 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
     }
   }, [searchQuery, apiKey]);
 
+  // Featured movie para o header destacado
+  const featuredMovie = !searchQuery && (popularMovies.length > 0 || upcomingMovies.length > 0)
+    ? (popularMovies[0] || upcomingMovies[0])
+    : null;
+  
+  const featuredBackdropUrl = featuredMovie 
+    ? (featuredMovie.backdrop_path 
+        ? `https://image.tmdb.org/t/p/w1280${featuredMovie.backdrop_path}`
+        : featuredMovie.poster_path 
+        ? `https://image.tmdb.org/t/p/w1280${featuredMovie.poster_path}`
+        : null)
+    : null;
+  
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });
+  };
+
   return (
     <div className="bg-gradient-to-br from-[#0a0a0f] via-[#1a0f2e] to-[#2d1b3d] min-h-screen overflow-y-auto scrollbar-hide pb-[72px]">
       {/* Header */}
       <div className="px-6 pt-8 pb-4">
-        {/* Logo */}
-        <div className="h-[36px] w-[60px] mb-[15px]">
-          <img 
-            src={logoImage} 
-            alt="OQ Assistir" 
-            className="w-full h-full object-contain"
-          />
+        {/* Logo e Explore na mesma linha */}
+        <div className="flex items-center mb-[15px]">
+          {/* Logo */}
+          <div className="h-[48px] w-auto">
+            <img 
+              src={logoImage} 
+              alt="OQ Assistir" 
+              className="h-full w-auto object-contain"
+            />
+          </div>
+          
+          {/* Explore centralizado com ajuste para esquerda */}
+          <div className="flex-1 flex justify-center">
+            <h1 className="text-[28px] -ml-[24px]" style={{ color: '#00D98B', fontFamily: 'Poppins, sans-serif', fontWeight: 900 }}>
+              Explore
+            </h1>
+          </div>
         </div>
-        
-        <h1 className="font-['Montserrat:Black',sans-serif] text-[28px] mb-2" style={{ color: '#04FFA7' }}>
-          Explore
-        </h1>
         <p className="font-['Montserrat:Light',sans-serif] text-white/70 text-[14px] mb-4">
           Descubra os melhores lançamentos
         </p>
 
-        {/* Search Input */}
+        {/* Search Input Premium */}
         <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/60 z-10 pointer-events-none" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/30 z-10 pointer-events-none" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Buscar filmes e séries..."
-            className="w-full bg-white/10 backdrop-blur-md border border-white/20 rounded-[12px] pl-12 pr-4 py-3 text-white placeholder:text-white/40 font-['Montserrat:Regular',sans-serif] text-[14px] focus:outline-none focus:border-white/40 focus:bg-white/15 transition-all"
+            placeholder="Buscar filmes..."
+            className="w-full bg-white/5 backdrop-blur-xl border border-white/10 rounded-[16px] pl-12 pr-4 py-3 text-white placeholder:text-white/30 font-['Montserrat:Regular',sans-serif] text-[14px] focus:outline-none focus:border-white/20 focus:bg-white/8 transition-all"
           />
           {isSearching && (
-            <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/60 animate-spin z-10" />
+            <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40 animate-spin z-10" />
           )}
         </div>
       </div>
+
+      {/* Featured Movie Header */}
+      {featuredMovie && featuredBackdropUrl && (
+        <div className="relative mx-6 mb-8 rounded-[20px] overflow-hidden h-[200px]">
+          {/* Background com blur */}
+          <div className="absolute inset-0">
+            <img 
+              src={featuredBackdropUrl}
+              alt={featuredMovie.title}
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-black/40 backdrop-blur-sm"></div>
+          </div>
+          
+          {/* Conteúdo */}
+          <div className="relative h-full flex flex-col justify-end p-6">
+            <h2 className="text-white text-[24px] mb-2 font-['Poppins',sans-serif] font-bold line-clamp-2">
+              {featuredMovie.title}
+            </h2>
+            {featuredMovie.release_date && (
+              <p className="text-white/80 text-[14px] mb-4 font-['Montserrat:Regular',sans-serif]">
+                {formatDate(featuredMovie.release_date)}
+              </p>
+            )}
+            <button
+              onClick={() => onMovieClick(featuredMovie, [featuredMovie])}
+              className="self-start bg-white/20 backdrop-blur-md border border-white/30 text-white px-6 py-3 rounded-[12px] font-['Montserrat:SemiBold',sans-serif] text-[14px] hover:bg-white/30 transition-all"
+            >
+              Ver detalhes
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Search Results */}
       {searchQuery && (
@@ -191,7 +250,7 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
           {searchResults.length > 0 && (
             <>
               <div className="px-6 mb-4">
-                <h2 className="font-['Montserrat:Bold',sans-serif] text-white text-[20px]">
+                <h2 className="text-white text-[20px]" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 900 }}>
                   Filmes
                 </h2>
                 <p className="font-['Montserrat:Light',sans-serif] text-white/60 text-[13px] mt-1">
@@ -212,7 +271,7 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
                         <ImageWithFallback
                           src={`${imageBaseUrl}${movie.poster_path}`}
                           alt={movie.title}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover transition-opacity duration-300 group-hover:opacity-90"
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-white/30 text-[10px]">
@@ -265,7 +324,7 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
           {searchTVResults.length > 0 && (
             <>
               <div className="px-6 mb-4">
-                <h2 className="font-['Montserrat:Bold',sans-serif] text-white text-[20px]">
+                <h2 className="text-white text-[20px]" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 900 }}>
                   Séries
                 </h2>
                 <p className="font-['Montserrat:Light',sans-serif] text-white/60 text-[13px] mt-1">
@@ -286,7 +345,7 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
                         <ImageWithFallback
                           src={`${imageBaseUrl}${show.poster_path}`}
                           alt={show.name}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover transition-opacity duration-300 group-hover:opacity-90"
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-white/30 text-[10px]">
@@ -328,7 +387,7 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
           {searchActorResults.length > 0 && (
             <>
               <div className="px-6 mb-4">
-                <h2 className="font-['Montserrat:Bold',sans-serif] text-white text-[20px]">
+                <h2 className="text-white text-[20px]" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 900 }}>
                   Atores e Atrizes
                 </h2>
                 <p className="font-['Montserrat:Light',sans-serif] text-white/60 text-[13px] mt-1">
@@ -349,7 +408,7 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
                         <ImageWithFallback
                           src={`${imageBaseUrl}${actor.profile_path}`}
                           alt={actor.name}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover transition-opacity duration-300 group-hover:opacity-90"
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-white/30 text-[10px] bg-[#6416ff]/20">
@@ -387,28 +446,31 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
       )}
 
       {/* Now Playing Section */}
+      {!searchQuery && nowPlayingMovies.length === 0 && popularMovies.length === 0 && upcomingMovies.length === 0 && (
+        <SkeletonSection />
+      )}
       {!searchQuery && nowPlayingMovies.length > 0 && (
         <div className="mb-8">
           <div className="px-6 mb-4 flex items-center gap-2">
-            <FilmStrip className="w-6 h-6 text-white" weight="fill" />
-            <h2 className="font-['Montserrat:Bold',sans-serif] text-white text-[20px]">
+            <FilmStrip className="w-4 h-4 text-white/50" weight="regular" />
+            <h2 className="text-white text-[20px]" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 900 }}>
               Em Cartaz
             </h2>
           </div>
           
-          <div className="flex gap-4 overflow-x-auto scrollbar-hide px-6 pb-2">
+          <div className="flex gap-4 overflow-x-auto scrollbar-hide px-6 pb-2 scroll-smooth">
             {nowPlayingMovies.map((movie) => (
               <button
                 key={movie.id}
                 onClick={() => onMovieClick(movie, nowPlayingMovies)}
-                className="shrink-0 w-[140px] group"
+                className="shrink-0 w-[140px] group transition-transform duration-300 hover:scale-105 active:scale-95"
               >
-                <div className="relative mb-2 rounded-[10px] overflow-hidden bg-[#d9d9d9] aspect-[2/3] shadow-lg group-active:opacity-80 transition-opacity">
+                <div className="relative mb-2 rounded-[10px] overflow-hidden bg-[#d9d9d9] aspect-[2/3] shadow-lg group-hover:shadow-xl transition-all duration-300">
                   {movie.poster_path ? (
                     <ImageWithFallback
                       src={`${imageBaseUrl}${movie.poster_path}`}
                       alt={movie.title}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover transition-opacity duration-300 group-hover:opacity-90"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-white/30 text-[12px]">
@@ -431,25 +493,25 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
       {!searchQuery && filteredThisWeekMovies.length > 0 && (
         <div className="mb-8">
           <div className="px-6 mb-4 flex items-center gap-2">
-            <Calendar className="w-6 h-6 text-white" weight="fill" />
-            <h2 className="font-['Montserrat:Bold',sans-serif] text-white text-[20px]">
+            <Calendar className="w-4 h-4 text-white/50" weight="regular" />
+            <h2 className="text-white text-[20px]" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 900 }}>
               Lançamentos da Semana
             </h2>
           </div>
           
-          <div className="flex gap-4 overflow-x-auto scrollbar-hide px-6 pb-2">
+          <div className="flex gap-4 overflow-x-auto scrollbar-hide px-6 pb-2 scroll-smooth">
             {filteredThisWeekMovies.map((movie) => (
               <button
                 key={movie.id}
                 onClick={() => onMovieClick(movie, thisWeekMovies)}
-                className="shrink-0 w-[140px] group"
+                className="shrink-0 w-[140px] group transition-transform duration-300 hover:scale-105 active:scale-95"
               >
-                <div className="relative mb-2 rounded-[10px] overflow-hidden bg-[#d9d9d9] aspect-[2/3] shadow-lg group-active:opacity-80 transition-opacity">
+                <div className="relative mb-2 rounded-[10px] overflow-hidden bg-[#d9d9d9] aspect-[2/3] shadow-lg group-hover:shadow-xl transition-all duration-300">
                   {movie.poster_path ? (
                     <ImageWithFallback
                       src={`${imageBaseUrl}${movie.poster_path}`}
                       alt={movie.title}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover transition-opacity duration-300 group-hover:opacity-90"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-white/30 text-[12px]">
@@ -478,8 +540,8 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
       {!searchQuery && nostalgicMovies.length > 0 && (
         <div className="mb-8">
           <div className="px-6 mb-4 flex items-center gap-2">
-            <House className="w-6 h-6 text-white" weight="fill" />
-            <h2 className="font-['Montserrat:Bold',sans-serif] text-white text-[20px]">
+            <House className="w-4 h-4 text-white/50" weight="regular" />
+            <h2 className="text-white text-[20px]" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 900 }}>
               Nostalgia - Ver em casa
             </h2>
           </div>
@@ -487,19 +549,19 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
             Clássicos e filmes antigos que mudam toda semana
           </p>
           
-          <div className="flex gap-4 overflow-x-auto scrollbar-hide px-6 pb-2">
+          <div className="flex gap-4 overflow-x-auto scrollbar-hide px-6 pb-2 scroll-smooth">
             {nostalgicMovies.map((movie) => (
               <button
                 key={movie.id}
                 onClick={() => onMovieClick(movie, nostalgicMovies)}
-                className="shrink-0 w-[140px] group"
+                className="shrink-0 w-[140px] group transition-transform duration-300 hover:scale-105 active:scale-95"
               >
-                <div className="relative mb-2 rounded-[10px] overflow-hidden bg-[#d9d9d9] aspect-[2/3] shadow-lg group-active:opacity-80 transition-opacity">
+                <div className="relative mb-2 rounded-[10px] overflow-hidden bg-[#d9d9d9] aspect-[2/3] shadow-lg group-hover:shadow-xl transition-all duration-300">
                   {movie.poster_path ? (
                     <ImageWithFallback
                       src={`${imageBaseUrl}${movie.poster_path}`}
                       alt={movie.title}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover transition-opacity duration-300 group-hover:opacity-90"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-white/30 text-[12px]">
@@ -530,24 +592,24 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
       {!searchQuery && filteredPopularMovies.length > 0 && (
         <div className="mb-8">
           <div className="px-6 mb-4 flex items-center gap-2">
-            <h2 className="font-['Montserrat:Bold',sans-serif] text-white text-[20px]">
+            <h2 className="text-white text-[20px]" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 900 }}>
               Mais Populares
             </h2>
           </div>
           
-          <div className="flex gap-4 overflow-x-auto scrollbar-hide px-6 pb-2">
+          <div className="flex gap-4 overflow-x-auto scrollbar-hide px-6 pb-2 scroll-smooth">
             {filteredPopularMovies.map((movie) => (
               <button
                 key={movie.id}
                 onClick={() => onMovieClick(movie, popularMovies)}
-                className="shrink-0 w-[140px] group"
+                className="shrink-0 w-[140px] group transition-transform duration-300 hover:scale-105 active:scale-95"
               >
-                <div className="relative mb-2 rounded-[10px] overflow-hidden bg-[#d9d9d9] aspect-[2/3] shadow-lg group-active:opacity-80 transition-opacity">
+                <div className="relative mb-2 rounded-[10px] overflow-hidden bg-[#d9d9d9] aspect-[2/3] shadow-lg group-hover:shadow-xl transition-all duration-300">
                   {movie.poster_path ? (
                     <ImageWithFallback
                       src={`${imageBaseUrl}${movie.poster_path}`}
                       alt={movie.title}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover transition-opacity duration-300 group-hover:opacity-90"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-white/30 text-[12px]">
@@ -570,25 +632,25 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
       {!searchQuery && tvShows.length > 0 && (
         <div className="mb-8">
           <div className="px-6 mb-4 flex items-center gap-2">
-            <Television className="w-6 h-6 text-white" weight="fill" />
-            <h2 className="font-['Montserrat:Bold',sans-serif] text-white text-[20px]">
+            <Television className="w-4 h-4 text-white/50" weight="regular" />
+            <h2 className="text-white text-[20px]" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 900 }}>
               Séries no Ar
             </h2>
           </div>
           
-          <div className="flex gap-4 overflow-x-auto scrollbar-hide px-6 pb-2">
+          <div className="flex gap-4 overflow-x-auto scrollbar-hide px-6 pb-2 scroll-smooth">
             {tvShows.map((show) => (
               <button
                 key={show.id}
                 onClick={() => onTVShowClick(show)}
-                className="shrink-0 w-[140px] group"
+                className="shrink-0 w-[140px] group transition-transform duration-300 hover:scale-105 active:scale-95"
               >
-                <div className="relative mb-2 rounded-[10px] overflow-hidden bg-[#d9d9d9] aspect-[2/3] shadow-lg group-active:opacity-80 transition-opacity">
+                <div className="relative mb-2 rounded-[10px] overflow-hidden bg-[#d9d9d9] aspect-[2/3] shadow-lg group-hover:shadow-xl transition-all duration-300">
                   {show.poster_path ? (
                     <ImageWithFallback
                       src={`${imageBaseUrl}${show.poster_path}`}
                       alt={show.name}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover transition-opacity duration-300 group-hover:opacity-90"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-white/30 text-[12px]">
@@ -619,7 +681,7 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
       {!searchQuery && (
         <div className="mb-8">
           <div className="px-6 mb-4">
-            <h2 className="font-['Montserrat:Bold',sans-serif] text-white text-[20px]">
+            <h2 className="text-white text-[20px]" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 900 }}>
               Todos os Próximos Lançamentos
             </h2>
           </div>
@@ -637,7 +699,7 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
                     <ImageWithFallback
                       src={`${imageBaseUrl}${movie.poster_path}`}
                       alt={movie.title}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover transition-opacity duration-300 group-hover:opacity-90"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-white/30 text-[10px]">

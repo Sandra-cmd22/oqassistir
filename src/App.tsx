@@ -864,7 +864,7 @@ export default function App() {
       <div className="bg-black/30 backdrop-blur-md border-b border-white/10 px-4 py-3 flex items-center justify-between sticky top-0 z-10">
         <div className="w-10"></div>
         
-        <h1 className="font-['Montserrat:Bold',sans-serif] text-white text-[18px]">
+        <h1 className="text-[28px]" style={{ color: '#00D98B', fontFamily: 'Poppins, sans-serif', fontWeight: 900 }}>
           {currentView === 'swiper' ? 'Descobrir' : 'Próximos Lançamentos'}
         </h1>
         

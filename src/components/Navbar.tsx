@@ -29,12 +29,12 @@ export function Navbar({ currentView, onNavigate, hasActiveFilters, favoritesCou
             className={`flex flex-col items-center gap-1 px-2 py-2 rounded-xl transition-all flex-1 ${
               isActive 
                 ? 'text-white' 
-                : 'text-white/60 hover:text-white hover:bg-white/10'
+                : 'text-white/40 hover:text-white/60 hover:bg-white/10'
             }`}
           >
             <div className="relative">
               <Icon 
-                className={`w-6 h-6 ${isActive ? 'stroke-[2.5]' : 'stroke-2'}`} 
+                className={isActive ? 'w-7 h-7 stroke-[2.5]' : 'w-6 h-6 stroke-2'} 
                 style={isActive ? { color: '#04FFA7' } : undefined}
               />
               {item.id === 'favorites' && favoritesCount > 0 && (
@@ -42,8 +42,8 @@ export function Navbar({ currentView, onNavigate, hasActiveFilters, favoritesCou
               )}
             </div>
             <span 
-              className={`text-[10px] font-['Montserrat:${isActive ? 'SemiBold' : 'Regular'}',sans-serif] leading-tight`}
-              style={isActive ? { color: '#04FFA7' } : undefined}
+              className={`text-[10px] leading-tight`}
+              style={isActive ? { color: '#04FFA7', fontFamily: 'Montserrat, sans-serif', fontWeight: 600 } : { fontFamily: 'Montserrat, sans-serif', fontWeight: 400 }}
             >
               {item.label}
             </span>

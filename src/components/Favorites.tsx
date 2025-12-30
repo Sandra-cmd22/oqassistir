@@ -51,7 +51,7 @@ export function Favorites({ movies, genres, onMovieClick, onToggleFavorite }: Fa
     <div className="flex flex-col h-full">
       {/* Header */}
       <div className="px-6 pt-6 pb-4 bg-gradient-to-b from-black/60 to-transparent flex-shrink-0">
-        <h1 className="font-['Montserrat:Bold',sans-serif] text-white text-[28px]">
+        <h1 className="text-white text-[28px]" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 900 }}>
           Meus Favoritos
         </h1>
         <p className="font-['Montserrat:Light',sans-serif] text-white/60 text-[14px] mt-1">

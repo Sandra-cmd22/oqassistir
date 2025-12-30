@@ -228,7 +228,7 @@ export function CinemaNews({ onArticleClick }: CinemaNewsProps) {
   return (
     <div className="px-4 py-6 space-y-4 pb-24">
         <div className="mb-6">
-          <h2 className="font-['Montserrat:Bold',sans-serif] text-white text-[24px] mb-2">
+          <h2 className="text-white text-[24px] mb-2" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 900 }}>
             Notícias do Cinema
           </h2>
           <p className="font-['Montserrat:Light',sans-serif] text-white/60 text-[14px]">
