@@ -9,7 +9,11 @@
       react(),
       VitePWA({
         registerType: 'autoUpdate',
-        includeAssets: ['favicon.ico', 'icons/*.png'],
+        includeAssets: [
+          'favicon.ico',
+          'icons/icon-192.png',
+          'icons/icon-512.png'
+        ],
         manifest: {
           name: 'Meu App Filmes',
           short_name: 'Filmes',
