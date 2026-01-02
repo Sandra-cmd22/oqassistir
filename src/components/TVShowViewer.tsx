@@ -160,8 +160,8 @@ export function TVShowViewer({ show, genres, onClose, onActorClick, isFavorite, 
           <div 
             className="relative w-full aspect-[9/16]" 
             style={{ 
-              marginTop: `calc(-1 * env(safe-area-inset-top, 0px))`,
-              paddingTop: 'env(safe-area-inset-top, 0px)',
+              marginTop: 0,
+              paddingTop: 0,
             }}
           >
             {show.poster_path ? (
@@ -187,7 +187,7 @@ export function TVShowViewer({ show, genres, onClose, onActorClick, isFavorite, 
 
             {/* Top bar - Back button (fixed) and IMDb rating (absolute) */}
             {/* Fixed back button */}
-            <div className="fixed top-0 left-0 p-4 pt-16 z-[999]">
+            <div className="fixed left-0 p-4 z-[999]" style={{ top: 'env(safe-area-inset-top, 16px)' }}>
               <button
                 onClick={onClose}
                 className="bg-black/40 backdrop-blur-md rounded-full p-3 shadow-lg hover:bg-black/60 transition-all active:scale-95 cursor-pointer"
@@ -198,7 +198,7 @@ export function TVShowViewer({ show, genres, onClose, onActorClick, isFavorite, 
             
             {/* Absolute IMDb rating - disappears with scroll */}
             {show.vote_average && show.vote_average > 0 && (
-              <div className="absolute top-0 right-0 p-4 pt-16 z-10">
+              <div className="absolute right-0 p-4 z-10" style={{ top: 'env(safe-area-inset-top, 16px)' }}>
                 <div className="bg-black/40 backdrop-blur-md rounded-full px-3 py-1.5 flex items-center gap-1.5 shadow-lg">
                   <span className="font-['Montserrat:Bold',sans-serif] text-white text-[12px]">
                     IMDb {show.vote_average.toFixed(1)}
@@ -301,76 +301,78 @@ export function TVShowViewer({ show, genres, onClose, onActorClick, isFavorite, 
         </div>
 
         {/* Additional Information - Below the poster, starts exactly where poster ends */}
-        <div className="px-6 pb-6 flex flex-col gap-[22px] bg-black relative" style={{ backgroundColor: '#000000', zIndex: 10, marginTop: '180px' }}>
-          {/* Synopsis */}
-          <div className="bg-black" style={{ backgroundColor: '#000000' }}>
-            <p className="font-['Montserrat:SemiBold',sans-serif] text-white text-[16px] mb-2">
-              Sinopse:
-            </p>
-            <p className="font-['Montserrat:Light',sans-serif] text-white/90 text-[14px] leading-relaxed">
-              {show.overview || 'Sinopse não disponível.'}
-            </p>
-          </div>
-
-          {/* Where to Watch */}
-          {show.watch_providers && show.watch_providers.length > 0 && (
-            <div className="bg-white/10 backdrop-blur-md rounded-[10px] p-4">
-              <p className="font-['Montserrat:SemiBold',sans-serif] text-white text-[16px] mb-3">
-                Onde Assistir:
+        <div className="w-full bg-black relative" style={{ backgroundColor: '#000000', zIndex: 10, marginTop: '180px' }}>
+          <div className="w-full max-w-full px-6 pb-6 flex flex-col gap-8">
+            {/* Synopsis */}
+            <div className="w-full">
+              <p className="font-['Montserrat:SemiBold',sans-serif] text-white text-[16px] mb-2">
+                Sinopse:
               </p>
-              <div className="flex gap-3 flex-wrap">
-                {show.watch_providers.map((provider, index) => (
-                  <div key={index} className="flex flex-col items-center gap-2">
-                    <div className="rounded-[8px] p-2 w-16 h-16 flex items-center justify-center">
-                      <ImageWithFallback
-                        src={`https://image.tmdb.org/t/p/w92${provider.logo_path}`}
-                        alt={provider.provider_name}
-                        className="w-full h-full object-contain rounded-[6px]"
-                      />
-                    </div>
-                    <p className="font-['Montserrat:Regular',sans-serif] text-white/90 text-[11px] text-center max-w-[80px]">
-                      {provider.provider_name}
-                    </p>
-                  </div>
-                ))}
-              </div>
+              <p className="font-['Montserrat:Light',sans-serif] text-white/90 text-[14px] leading-relaxed">
+                {show.overview || 'Sinopse não disponível.'}
+              </p>
             </div>
-          )}
 
-          {/* Cast */}
-          {cast.length > 0 && (
-            <div className="bg-white/10 backdrop-blur-md rounded-[10px] p-4">
-              <p className="font-['Montserrat:SemiBold',sans-serif] text-white text-[16px] mb-4">
-                Elenco:
-              </p>
-              <div className="flex gap-3 w-full overflow-x-auto pb-2 scrollbar-hide">
-                {cast.map((actor) => (
-                  <button
-                    key={actor.id}
-                    onClick={() => onActorClick?.(actor)}
-                    className="flex flex-col gap-2 items-center shrink-0 w-[90px] group"
-                  >
-                    <div className="bg-[#d9d9d9] w-[90px] h-[90px] rounded-full overflow-hidden shadow-md group-hover:scale-105 transition-transform">
-                      {actor.profile_path ? (
+            {/* Where to Watch */}
+            {show.watch_providers && show.watch_providers.length > 0 && (
+              <div className="w-full bg-white/10 backdrop-blur-md rounded-[10px] p-4">
+                <p className="font-['Montserrat:SemiBold',sans-serif] text-white text-[16px] mb-3">
+                  Onde Assistir:
+                </p>
+                <div className="flex gap-3 flex-wrap">
+                  {show.watch_providers.map((provider, index) => (
+                    <div key={index} className="flex flex-col items-center gap-2">
+                      <div className="rounded-[8px] p-2 w-16 h-16 flex items-center justify-center">
                         <ImageWithFallback
-                          src={`${imageBaseUrl}${actor.profile_path}`}
-                          alt={actor.name}
-                          className="w-full h-full object-cover"
+                          src={`https://image.tmdb.org/t/p/w92${provider.logo_path}`}
+                          alt={provider.provider_name}
+                          className="w-full h-full object-contain rounded-[6px]"
                         />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-white/30 text-[12px]">
-                          N/A
-                        </div>
-                      )}
+                      </div>
+                      <p className="font-['Montserrat:Regular',sans-serif] text-white/90 text-[11px] text-center max-w-[80px]">
+                        {provider.provider_name}
+                      </p>
                     </div>
-                    <p className="font-['Montserrat:Regular',sans-serif] text-white/90 text-[13px] text-center w-full break-words group-hover:text-white transition-colors">
-                      {actor.name}
-                    </p>
-                  </button>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
+
+            {/* Cast */}
+            {cast.length > 0 && (
+              <div className="w-full bg-white/10 backdrop-blur-md rounded-[10px] p-4">
+                <p className="font-['Montserrat:SemiBold',sans-serif] text-white text-[16px] mb-4">
+                  Elenco:
+                </p>
+                <div className="flex gap-3 w-full overflow-x-auto pb-2 scrollbar-hide">
+                  {cast.map((actor) => (
+                    <button
+                      key={actor.id}
+                      onClick={() => onActorClick?.(actor)}
+                      className="flex flex-col gap-2 items-center shrink-0 w-[90px] group"
+                    >
+                      <div className="bg-[#d9d9d9] w-[90px] h-[90px] rounded-full overflow-hidden shadow-md group-hover:scale-105 transition-transform">
+                        {actor.profile_path ? (
+                          <ImageWithFallback
+                            src={`${imageBaseUrl}${actor.profile_path}`}
+                            alt={actor.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-white/30 text-[12px]">
+                            N/A
+                          </div>
+                        )}
+                      </div>
+                      <p className="font-['Montserrat:Regular',sans-serif] text-white/90 text-[13px] text-center w-full break-words group-hover:text-white transition-colors">
+                        {actor.name}
+                      </p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

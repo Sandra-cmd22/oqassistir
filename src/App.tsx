@@ -837,7 +837,7 @@ export default function App() {
   if (selectedMovie) {
     return (
       <>
-        <div className="fixed inset-0 bg-black" style={{ top: 0, left: 0, right: 0, bottom: 0, zIndex: 1 }}>
+        <div className="fixed bg-black" style={{ top: 0, left: 0, right: 0, bottom: 0, zIndex: 1 }}>
           {loadingMovie ? (
             <div className="flex items-center justify-center h-full">
               <Loader2 className="w-12 h-12 text-white animate-spin" />
@@ -858,6 +858,7 @@ export default function App() {
               currentView={currentView}
               hasActiveFilters={hasActiveFilters}
               apiKey={TMDB_API_KEY}
+              onMovieClick={handleHomeMovieClick}
             />
           )}
         </div>
@@ -874,7 +875,7 @@ export default function App() {
   // Show TV Show Viewer view (full-bleed hero poster)
   if (selectedTVShow) {
     return (
-      <div className="fixed inset-0 bg-black z-50 overflow-hidden" style={{ top: 0, left: 0, right: 0, bottom: 0 }}>
+      <div className="fixed bg-black z-50 overflow-hidden" style={{ top: 0, left: 0, right: 0, bottom: 0 }}>
         {loadingTVShow ? (
           <div className="flex items-center justify-center h-full">
             <Loader2 className="w-12 h-12 text-white animate-spin" />
