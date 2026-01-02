@@ -229,10 +229,11 @@ export function MovieViewer({ movie, genres, onClose, onActorClick, isFavorite, 
       <div className="flex-1 overflow-y-auto scrollbar-hide bg-black" style={{ paddingBottom: '80px', pointerEvents: 'auto', backgroundColor: '#000000' }}>
         {/* Poster Section - Full bleed até status bar */}
         <div 
-          className="relative w-full" 
+          className="relative w-full bg-black" 
           style={{ 
             marginTop: `calc(-1 * env(safe-area-inset-top, 0px))`,
             paddingTop: 'env(safe-area-inset-top, 0px)',
+            backgroundColor: '#000000',
           }}
         >
           {/* Poster Image - Full height, no blur, extends to status bar */}

@@ -1,10 +1,40 @@
 
   import { defineConfig } from 'vite';
   import react from '@vitejs/plugin-react-swc';
+  import { VitePWA } from 'vite-plugin-pwa';
   import path from 'path';
 
   export default defineConfig({
-    plugins: [react()],
+    plugins: [
+      react(),
+      VitePWA({
+        registerType: 'autoUpdate',
+        includeAssets: ['favicon.ico', 'icons/*.png'],
+        manifest: {
+          name: 'Meu App Filmes',
+          short_name: 'Filmes',
+          description: 'Catálogo de filmes e séries',
+          display: 'standalone',
+          theme_color: '#000000',
+          background_color: '#000000',
+          orientation: 'portrait',
+          start_url: '/',
+          scope: '/',
+          icons: [
+            {
+              src: 'icons/icon-192.png',
+              sizes: '192x192',
+              type: 'image/png'
+            },
+            {
+              src: 'icons/icon-512.png',
+              sizes: '512x512',
+              type: 'image/png'
+            }
+          ]
+        }
+      })
+    ],
     resolve: {
       extensions: ['.js', '.jsx', '.ts', '.tsx', '.json'],
       alias: {
