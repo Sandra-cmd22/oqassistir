@@ -11,7 +11,7 @@
         registerType: 'autoUpdate',
         includeAssets: [
           'favicon.ico',
-          'icons/logo.180.png',
+          'logo.180.png',
           'icons/logo.192.png',
           'icons/logo.512.png'
         ],
