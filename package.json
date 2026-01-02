@@ -56,6 +56,6 @@
       },
       "scripts": {
             "dev": "vite",
-            "build": "vite build && cp PUBLIC/icons/logo.180.png build/apple-touch-icon.png || cp public/icons/logo.180.png build/apple-touch-icon.png || true"
+            "build": "vite build && (cp public/icons/logo.180.png build/apple-touch-icon.png 2>/dev/null || cp PUBLIC/icons/logo.180.png build/apple-touch-icon.png 2>/dev/null || true)"
       }
 }
