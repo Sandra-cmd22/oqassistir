@@ -1,6 +1,5 @@
 import { ImageWithFallback } from './figma/ImageWithFallback';
-import { usePosterColors } from '../hooks/usePosterColors';
-import { ArrowLeft, Youtube, Share2, Heart, Play, Plus } from 'lucide-react';
+import { ArrowLeft, Youtube, Share2, Heart, Play } from 'lucide-react';
 import { Navbar } from './Navbar';
 import { useEffect } from 'react';
 
@@ -48,20 +47,7 @@ interface TVShowViewerProps {
 }
 
 export function TVShowViewer({ show, genres, onClose, onActorClick, isFavorite, onToggleFavorite, favoritesCount = 0, onNavigate, currentView = 'home', hasActiveFilters = false }: TVShowViewerProps) {
-  const imageBaseUrl = 'https://image.tmdb.org/t/p';
-  
-  // Use backdrop_path for full-bleed, fallback to poster_path
-  const fullBleedImage = show.backdrop_path 
-    ? `${imageBaseUrl}/w1280${show.backdrop_path}` 
-    : show.poster_path 
-    ? `${imageBaseUrl}/w1280${show.poster_path}` 
-    : null;
-  
-  // Extract colors from poster
-  const posterUrl = show.poster_path 
-    ? `${imageBaseUrl}/w500${show.poster_path}` 
-    : null;
-  const colors = usePosterColors(posterUrl);
+  const imageBaseUrl = 'https://image.tmdb.org/t/p/w500';
 
   const cast = show.credits?.cast.slice(0, 4) || [];
   const showGenres = show.genre_ids.map(id => {
@@ -96,6 +82,16 @@ export function TVShowViewer({ show, genres, onClose, onActorClick, isFavorite, 
     return date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
   };
 
+  // Get streaming link
+  const getStreamingLink = () => {
+    if (show.watch_providers && show.watch_providers.length > 0) {
+      // Link to JustWatch search for the TV show
+      const searchQuery = encodeURIComponent(show.name);
+      return `https://www.justwatch.com/br/busca?q=${searchQuery}`;
+    }
+    return null;
+  };
+
   const handleShare = async () => {
     if (navigator.share) {
       try {
@@ -124,173 +120,240 @@ export function TVShowViewer({ show, genres, onClose, onActorClick, isFavorite, 
   }, []);
 
   return (
-    <div className="relative w-full h-full overflow-y-auto scrollbar-hide flex flex-col bg-black" style={{ paddingTop: 0, marginTop: 0, paddingBottom: '80px' }}>
-      {/* Hero Poster - Full-bleed até a status bar */}
-      <div 
-        className="relative w-full"
-        style={{
-          height: '60vh',
-          minHeight: '400px',
-          paddingTop: 'env(safe-area-inset-top, 0)',
-        }}
-      >
-        {/* Full-bleed background image */}
-        {fullBleedImage && (
-          <div 
-            className="absolute inset-0 w-full h-full z-0"
-            style={{
-              backgroundImage: `url(${fullBleedImage})`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              backgroundRepeat: 'no-repeat',
-              top: 0,
-              left: 0,
-              right: 0,
-            }}
-          />
-        )}
-
-        {/* Strong black gradient overlay at bottom - Netflix/Apple TV style */}
+    <div className="relative h-full w-full flex flex-col bg-black" style={{ pointerEvents: 'auto', top: 0, left: 0, right: 0, bottom: 0 }}>
+      {/* Blurred poster background layer - Behind main poster - Limited to poster section */}
+      {show.poster_path && (
         <div 
-          className="absolute inset-x-0 bottom-0 z-[5]"
+          className="absolute -z-20 transition-all duration-700"
           style={{
-            height: '100%',
-            background: 'linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.4) 20%, rgba(0, 0, 0, 0.7) 40%, rgba(0, 0, 0, 0.9) 60%, rgba(0, 0, 0, 0.98) 80%, rgba(0, 0, 0, 1) 100%)',
-            pointerEvents: 'none',
+            backgroundImage: `url(${imageBaseUrl}${show.poster_path})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            filter: 'blur(80px) brightness(0.15)',
+            transform: 'scale(1.3)',
+            top: `calc(-1 * env(safe-area-inset-top, 0px))`,
+            left: 0,
+            right: 0,
+            height: 'calc(100vw * 9 / 16 + env(safe-area-inset-top, 0px))',
+            paddingTop: 'env(safe-area-inset-top, 0px)',
           }}
         />
+      )}
 
-        {/* Top Bar - Back button and IMDb rating */}
-        <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-4 pt-4" style={{ paddingTop: 'max(env(safe-area-inset-top, 1rem), 1rem)' }}>
-          <button
-            onClick={onClose}
-            className="bg-black/40 backdrop-blur-md rounded-full p-3 shadow-lg hover:bg-black/60 transition-all active:scale-95"
+      {/* Subtle dark overlay - Apple TV style - Limited to poster section */}
+      <div 
+        className="absolute -z-10 transition-all duration-700"
+        style={{
+          background: 'radial-gradient(circle at center, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0.6) 70%, rgba(0, 0, 0, 0.9) 100%)',
+          top: `calc(-1 * env(safe-area-inset-top, 0px))`,
+          left: 0,
+          right: 0,
+          height: 'calc(100vw * 9 / 16 + env(safe-area-inset-top, 0px))',
+        }}
+      />
+
+      {/* Main Content - Scrollable */}
+      <div className="flex-1 overflow-y-auto scrollbar-hide bg-black" style={{ paddingBottom: '80px', pointerEvents: 'auto', backgroundColor: '#000000' }}>
+        {/* Poster Section - Full bleed até status bar */}
+        <div className="relative w-full" style={{ marginTop: 0, paddingTop: 0 }}>
+          {/* Poster Image - Full height, no blur, extends to status bar */}
+          <div 
+            className="relative w-full aspect-[9/16]" 
+            style={{ 
+              marginTop: `calc(-1 * env(safe-area-inset-top, 0px))`,
+              paddingTop: 'env(safe-area-inset-top, 0px)',
+            }}
           >
-            <ArrowLeft className="w-6 h-6 text-white" />
-          </button>
-          
-          {imdbRating && (
-            <div className="bg-black/60 backdrop-blur-md rounded-full px-4 py-2 flex items-center gap-2">
-              <span className="font-['Montserrat:Medium',sans-serif] text-white text-[14px]">IMDb</span>
-              <span className="font-['Montserrat:Bold',sans-serif] text-white text-[14px]">{imdbRating}</span>
-            </div>
-          )}
-        </div>
+            {show.poster_path ? (
+              <ImageWithFallback
+                src={`${imageBaseUrl}${show.poster_path}`}
+                alt={show.name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-[#d9d9d9] flex items-center justify-center text-white/50">
+                Sem imagem
+              </div>
+            )}
+            
+            {/* Fade at bottom - starts only in the last 30% (from 70%) */}
+            <div 
+              className="absolute bottom-0 left-0 right-0 pointer-events-none z-[5]"
+              style={{
+                height: '30%',
+                background: 'linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0.85) 25%, rgba(0,0,0,0.6) 50%, rgba(0,0,0,0.3) 75%, rgba(0,0,0,0) 100%)',
+              }}
+            />
 
-      </div>
-
-      {/* Content Section - Below poster */}
-      <div className="relative bg-black pt-8 px-4 pb-6" style={{ backgroundColor: '#000000' }}>
-        <div className="flex flex-col gap-6 items-center w-full max-w-[400px] mx-auto">
-          {/* Title - Centered below poster */}
-          <h2 className="font-['SF Pro Display',sans-serif] text-white text-center text-[32px] mb-2" style={{ fontWeight: 700 }}>
-            {show.name}
-          </h2>
-
-          {/* Tags - Genre, Certification, Country, Year */}
-          <div className="flex gap-2 justify-center items-center flex-wrap">
-            {/* Genre tag */}
-            {showGenres.slice(0, 1).map((genre, index) => (
-              <span
-                key={index}
-                className="bg-white/10 text-white px-3 py-1.5 rounded-lg text-[12px] font-['Montserrat:Medium',sans-serif] whitespace-nowrap"
+            {/* Top bar - Back button (fixed) and IMDb rating (absolute) */}
+            {/* Fixed back button */}
+            <div className="fixed top-0 left-0 p-4 pt-16 z-[999]">
+              <button
+                onClick={onClose}
+                className="bg-black/40 backdrop-blur-md rounded-full p-3 shadow-lg hover:bg-black/60 transition-all active:scale-95 cursor-pointer"
               >
-                {genre}
-              </span>
-            ))}
-            {/* Certification */}
-            {show.certification && (
-              <span className="bg-white/10 text-white px-3 py-1.5 rounded-lg text-[12px] font-['Montserrat:Medium',sans-serif] whitespace-nowrap">
-                {show.certification}
-              </span>
-            )}
-            {/* Country */}
-            {originCountry && (
-              <span className="bg-white/10 text-white px-3 py-1.5 rounded-lg text-[12px] font-['Montserrat:Medium',sans-serif] whitespace-nowrap">
-                {originCountry}
-              </span>
-            )}
-            {/* Year */}
-            {releaseYear && (
-              <span className="bg-white/10 text-white px-3 py-1.5 rounded-lg text-[12px] font-['Montserrat:Medium',sans-serif] whitespace-nowrap">
-                {releaseYear}
-              </span>
+                <ArrowLeft className="w-5 h-5 text-white" />
+              </button>
+            </div>
+            
+            {/* Absolute IMDb rating - disappears with scroll */}
+            {show.vote_average && show.vote_average > 0 && (
+              <div className="absolute top-0 right-0 p-4 pt-16 z-10">
+                <div className="bg-black/40 backdrop-blur-md rounded-full px-3 py-1.5 flex items-center gap-1.5 shadow-lg">
+                  <span className="font-['Montserrat:Bold',sans-serif] text-white text-[12px]">
+                    IMDb {show.vote_average.toFixed(1)}
+                  </span>
+                </div>
+              </div>
             )}
           </div>
 
-          {/* Action Buttons - Trailer, Add, Share - Round buttons */}
-          <div className="flex gap-3 justify-center">
-            {/* YouTube/Trailer Button */}
-            {show.trailer_key ? (
+          {/* Content overlay on poster - starts only in the last 30% (from 70%) */}
+          <div className="absolute left-0 right-0 px-6 z-20" style={{ top: '549px', bottom: 0, paddingBottom: '20px', left: '-9px' }}>
+            {/* TV Show Title */}
+            <h1 className="text-white mb-3 leading-tight text-center drop-shadow-lg" style={{ fontFamily: 'SF Pro Display', fontWeight: 700, fontSize: '30px' }}>
+              {show.name}
+            </h1>
+
+            {/* Meta Tags - Centered */}
+            <div className="flex items-center justify-center gap-2 mb-4 flex-wrap">
+              {showGenres.slice(0, 1).map((genre, index) => (
+                <span key={index} className="bg-white/10 backdrop-blur-sm rounded-full px-3 py-1.5 text-[12px] font-['Montserrat:Medium',sans-serif] text-white">
+                  {genre}
+                </span>
+              ))}
+              {show.certification && (
+                <span className="bg-white/10 backdrop-blur-sm rounded-full px-3 py-1.5 text-[12px] font-['Montserrat:Medium',sans-serif] text-white">
+                  {show.certification}
+                </span>
+              )}
+              {originCountry && (
+                <span className="bg-white/10 backdrop-blur-sm rounded-full px-3 py-1.5 text-[12px] font-['Montserrat:Medium',sans-serif] text-white">
+                  {originCountry}
+                </span>
+              )}
+              {releaseYear && (
+                <span className="bg-white/10 backdrop-blur-sm rounded-full px-3 py-1.5 text-[12px] font-['Montserrat:Medium',sans-serif] text-white">
+                  {releaseYear}
+                </span>
+              )}
+            </div>
+
+            {/* Action Buttons - Centered */}
+            <div className="flex items-center justify-center gap-4 mb-4">
+              {show.trailer_key && (
+                <a
+                  href={`https://www.youtube.com/watch?v=${show.trailer_key}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-white/22 backdrop-blur-md rounded-full p-3 hover:bg-white/35 transition-all active:scale-95"
+                >
+                  <Youtube className="w-5 h-5 text-white" />
+                </a>
+              )}
+              <button 
+                onClick={() => onToggleFavorite(show.id)}
+                className={`bg-white/22 backdrop-blur-md rounded-full p-3 hover:bg-white/35 transition-all active:scale-95 ${isFavorite ? 'bg-white/35' : ''}`}
+              >
+                <Heart className={`w-5 h-5 ${isFavorite ? 'text-white fill-white' : 'text-white'}`} />
+              </button>
+              <button 
+                onClick={handleShare}
+                className="bg-white/22 backdrop-blur-md rounded-full p-3 hover:bg-white/35 transition-all active:scale-95"
+              >
+                <Share2 className="w-5 h-5 text-white" />
+              </button>
+            </div>
+
+            {/* Play Button */}
+            {getStreamingLink() ? (
+              <a
+                href={getStreamingLink()}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full bg-white hover:bg-white/90 h-[50px] rounded-[8px] flex items-center justify-center gap-3 px-4 py-2 shadow-lg transition-all active:scale-95"
+              >
+                <Play className="w-5 h-5 text-black fill-black" />
+                <p className="font-['Montserrat:Bold',sans-serif] text-black text-[16px]">
+                  Assistir
+                </p>
+              </a>
+            ) : show.trailer_key ? (
               <a
                 href={`https://www.youtube.com/watch?v=${show.trailer_key}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-12 h-12 rounded-full flex items-center justify-center transition-all active:scale-95 border border-white/20"
-                style={{ backgroundColor: '#1A1817' }}
+                className="w-full bg-white hover:bg-white/90 h-[50px] rounded-[8px] flex items-center justify-center gap-3 px-4 py-2 shadow-lg transition-all active:scale-95"
               >
-                <Youtube className="w-6 h-6 text-white" />
+                <Play className="w-5 h-5 text-black fill-black" />
+                <p className="font-['Montserrat:Bold',sans-serif] text-black text-[16px]">
+                  Ver Trailer
+                </p>
               </a>
             ) : (
-              <div className="w-12 h-12 rounded-full flex items-center justify-center opacity-50 border border-white/20" style={{ backgroundColor: '#1A1817' }}>
-                <Youtube className="w-6 h-6 text-white/50" />
+              <div className="w-full bg-white/20 backdrop-blur-md h-[50px] rounded-[8px] flex items-center justify-center px-4 py-2">
+                <p className="font-['Montserrat:Regular',sans-serif] text-white/70 text-[14px]">
+                  Sem trailer no momento
+                </p>
               </div>
             )}
-            
-            {/* Add to List Button */}
-            {!isFavorite && (
-              <button
-                onClick={() => onToggleFavorite(show.id)}
-                className="w-12 h-12 rounded-full flex items-center justify-center transition-all active:scale-95 border border-white/20"
-                style={{ backgroundColor: '#1A1817' }}
-              >
-                <Plus className="w-6 h-6 text-white" />
-              </button>
-            )}
-            
-            {/* Share Button */}
-            <button
-              onClick={handleShare}
-              className="w-12 h-12 rounded-full flex items-center justify-center transition-all active:scale-95 border border-white/20"
-              style={{ backgroundColor: '#1A1817' }}
-            >
-              <Share2 className="w-6 h-6 text-white" />
-            </button>
           </div>
+        </div>
 
-          {/* Play Button - Large white button */}
-          <button className="w-full bg-white text-black rounded-lg h-[50px] flex items-center justify-center gap-2 font-['Montserrat:Bold',sans-serif] text-[16px] hover:bg-white/90 transition-all active:scale-95">
-            <Play className="w-5 h-5 fill-black" />
-            Play
-          </button>
-
-          {/* Synopsis Section */}
-          <div className="w-full">
-            <h3 className="font-['Montserrat:Bold',sans-serif] text-white text-[16px] mb-3">
+        {/* Additional Information - Below the poster, starts exactly where poster ends */}
+        <div className="px-6 pb-6 flex flex-col gap-[22px] bg-black relative" style={{ backgroundColor: '#000000', zIndex: 10, marginTop: '180px' }}>
+          {/* Synopsis */}
+          <div className="bg-black" style={{ backgroundColor: '#000000' }}>
+            <p className="font-['Montserrat:SemiBold',sans-serif] text-white text-[16px] mb-2">
               Sinopse:
-            </h3>
-            <p className="font-['Montserrat:Regular',sans-serif] text-white/90 text-[12px] leading-tight">
+            </p>
+            <p className="font-['Montserrat:Light',sans-serif] text-white/90 text-[14px] leading-relaxed">
               {show.overview || 'Sinopse não disponível.'}
             </p>
           </div>
 
-          {/* Cast Section */}
+          {/* Where to Watch */}
+          {show.watch_providers && show.watch_providers.length > 0 && (
+            <div className="bg-white/10 backdrop-blur-md rounded-[10px] p-4">
+              <p className="font-['Montserrat:SemiBold',sans-serif] text-white text-[16px] mb-3">
+                Onde Assistir:
+              </p>
+              <div className="flex gap-3 flex-wrap">
+                {show.watch_providers.map((provider, index) => (
+                  <div key={index} className="flex flex-col items-center gap-2">
+                    <div className="rounded-[8px] p-2 w-16 h-16 flex items-center justify-center">
+                      <ImageWithFallback
+                        src={`https://image.tmdb.org/t/p/w92${provider.logo_path}`}
+                        alt={provider.provider_name}
+                        className="w-full h-full object-contain rounded-[6px]"
+                      />
+                    </div>
+                    <p className="font-['Montserrat:Regular',sans-serif] text-white/90 text-[11px] text-center max-w-[80px]">
+                      {provider.provider_name}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Cast */}
           {cast.length > 0 && (
-            <div className="w-full">
-              <h3 className="font-['Montserrat:Bold',sans-serif] text-white text-[16px] mb-4">
+            <div className="bg-white/10 backdrop-blur-md rounded-[10px] p-4">
+              <p className="font-['Montserrat:SemiBold',sans-serif] text-white text-[16px] mb-4">
                 Elenco:
-              </h3>
+              </p>
               <div className="flex gap-3 w-full overflow-x-auto pb-2 scrollbar-hide">
                 {cast.map((actor) => (
                   <button
                     key={actor.id}
-                    className="flex flex-col gap-2 items-center shrink-0 w-[90px] cursor-pointer hover:opacity-80 transition-opacity active:scale-95"
                     onClick={() => onActorClick?.(actor)}
+                    className="flex flex-col gap-2 items-center shrink-0 w-[90px] group"
                   >
-                    <div className="bg-[#d9d9d9] h-[130px] w-full rounded-[8px] overflow-hidden shadow-md">
+                    <div className="bg-[#d9d9d9] w-[90px] h-[90px] rounded-full overflow-hidden shadow-md group-hover:scale-105 transition-transform">
                       {actor.profile_path ? (
                         <ImageWithFallback
-                          src={`${imageBaseUrl}/w500${actor.profile_path}`}
+                          src={`${imageBaseUrl}${actor.profile_path}`}
                           alt={actor.name}
                           className="w-full h-full object-cover"
                         />
@@ -300,7 +363,7 @@ export function TVShowViewer({ show, genres, onClose, onActorClick, isFavorite, 
                         </div>
                       )}
                     </div>
-                    <p className="font-['Montserrat:Regular',sans-serif] text-white/90 text-[13px] text-center w-full break-words">
+                    <p className="font-['Montserrat:Regular',sans-serif] text-white/90 text-[13px] text-center w-full break-words group-hover:text-white transition-colors">
                       {actor.name}
                     </p>
                   </button>
@@ -308,7 +371,6 @@ export function TVShowViewer({ show, genres, onClose, onActorClick, isFavorite, 
               </div>
             </div>
           )}
-
         </div>
       </div>
 

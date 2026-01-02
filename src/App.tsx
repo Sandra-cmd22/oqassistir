@@ -836,37 +836,45 @@ export default function App() {
   // Show Movie Viewer view (full-bleed hero poster)
   if (selectedMovie) {
     return (
-      <div className="fixed inset-0 bg-black z-50 overflow-hidden" style={{ paddingTop: 0, marginTop: 0, top: 0 }}>
-        {loadingMovie ? (
-          <div className="flex items-center justify-center h-full">
-            <Loader2 className="w-12 h-12 text-white animate-spin" />
-          </div>
-        ) : (
-          <MovieViewer
-            movie={selectedMovie}
-            genres={genres}
-            onClose={() => setSelectedMovie(null)}
-            onActorClick={(actor) => {
-              setSelectedMovie(null);
-              setSelectedActor(actor);
-            }}
-            isFavorite={favorites.includes(selectedMovie.id)}
-            onToggleFavorite={toggleFavorite}
-            favoritesCount={favorites.length + tvFavorites.length}
-            onNavigate={handleNavigation}
-            currentView={currentView}
-            hasActiveFilters={hasActiveFilters}
-            apiKey={TMDB_API_KEY}
-          />
-        )}
-      </div>
+      <>
+        <div className="fixed inset-0 bg-black" style={{ top: 0, left: 0, right: 0, bottom: 0, zIndex: 1 }}>
+          {loadingMovie ? (
+            <div className="flex items-center justify-center h-full">
+              <Loader2 className="w-12 h-12 text-white animate-spin" />
+            </div>
+          ) : (
+            <MovieViewer
+              movie={selectedMovie}
+              genres={genres}
+              onClose={() => setSelectedMovie(null)}
+              onActorClick={(actor) => {
+                setSelectedMovie(null);
+                setSelectedActor(actor);
+              }}
+              isFavorite={favorites.includes(selectedMovie.id)}
+              onToggleFavorite={toggleFavorite}
+              favoritesCount={favorites.length + tvFavorites.length}
+              onNavigate={handleNavigation}
+              currentView={currentView}
+              hasActiveFilters={hasActiveFilters}
+              apiKey={TMDB_API_KEY}
+            />
+          )}
+        </div>
+        <Navbar 
+          currentView={currentView}
+          onNavigate={handleNavigation}
+          hasActiveFilters={hasActiveFilters}
+          favoritesCount={favorites.length + tvFavorites.length}
+        />
+      </>
     );
   }
 
   // Show TV Show Viewer view (full-bleed hero poster)
   if (selectedTVShow) {
     return (
-      <div className="fixed inset-0 bg-black z-50 overflow-hidden" style={{ paddingTop: 0, marginTop: 0, top: 0 }}>
+      <div className="fixed inset-0 bg-black z-50 overflow-hidden" style={{ top: 0, left: 0, right: 0, bottom: 0 }}>
         {loadingTVShow ? (
           <div className="flex items-center justify-center h-full">
             <Loader2 className="w-12 h-12 text-white animate-spin" />
@@ -1014,7 +1022,7 @@ export default function App() {
           description="Fique por dentro das últimas notícias do cinema, lançamentos, atores e muito mais!"
           image={seoImage}
         />
-        <div className="bg-gradient-to-br from-[#0a0a0f] via-[#1a0f2e] to-[#2d1b3d] min-h-screen flex flex-col">
+        <div className="bg-black min-h-screen flex flex-col" style={{ backgroundColor: '#000000' }}>
           <CinemaNews 
             onArticleClick={(article) => {
               setSelectedNewsArticle(article);
@@ -1058,7 +1066,7 @@ export default function App() {
           description="Veja seus filmes e séries favoritos salvos"
           image={seoImage}
         />
-        <div className="bg-gradient-to-br from-[#0a0a0f] via-[#1a0f2e] to-[#2d1b3d] min-h-screen flex flex-col">
+        <div className="bg-black min-h-screen flex flex-col" style={{ backgroundColor: '#000000' }}>
           <Favorites
             movies={favoriteMovies}
             genres={genres}

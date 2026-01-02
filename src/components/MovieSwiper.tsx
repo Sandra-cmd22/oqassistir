@@ -221,7 +221,7 @@ export function MovieSwiper({ movies, genres, currentIndex, onIndexChange, onAct
                     onClick={() => onActorClick(actor)}
                     className="flex flex-col gap-2 items-center shrink-0 w-[90px] group"
                   >
-                    <div className="bg-[#d9d9d9] h-[130px] w-full rounded-[8px] overflow-hidden shadow-md group-hover:scale-105 transition-transform">
+                    <div className="bg-[#d9d9d9] w-[90px] h-[90px] rounded-full overflow-hidden shadow-md group-hover:scale-105 transition-transform">
                       {actor.profile_path ? (
                         <ImageWithFallback
                           src={`${imageBaseUrl}${actor.profile_path}`}

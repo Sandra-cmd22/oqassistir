@@ -268,7 +268,7 @@ export function CinemaNews({ onArticleClick }: CinemaNewsProps) {
                 <div className="p-4 flex flex-col h-full">
                   {/* Source */}
                   <div className="mb-2">
-                    <span className="font-['Montserrat:SemiBold',sans-serif] text-[#6416ff] text-[12px]">
+                    <span className="font-['Montserrat:SemiBold',sans-serif] text-white/70 text-[12px]">
                       {article.source.name}
                     </span>
                   </div>
@@ -286,7 +286,7 @@ export function CinemaNews({ onArticleClick }: CinemaNewsProps) {
                   )}
 
                   {/* Read more hint */}
-                  <div className="flex items-center gap-2 text-[#6416ff] mb-2">
+                  <div className="flex items-center gap-2 text-white/70 mb-2">
                     <span className="font-['Montserrat:SemiBold',sans-serif] text-[12px]">
                       Ler notícia completa
                     </span>
@@ -295,7 +295,7 @@ export function CinemaNews({ onArticleClick }: CinemaNewsProps) {
                   {/* Date at bottom */}
                   {article.publishedAt && (
                     <div className="mt-auto pt-2 border-t border-white/10">
-                      <span className="font-['Montserrat:Light',sans-serif] text-[11px]" style={{ color: '#04FFA7' }}>
+                      <span className="font-['Montserrat:Light',sans-serif] text-white/70 text-[11px]">
                         {formatDate(article.publishedAt)}
                         {formatTime(article.publishedAt) && ` às ${formatTime(article.publishedAt)}`}
                       </span>

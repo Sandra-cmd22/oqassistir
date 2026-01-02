@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { usePosterColors } from '../hooks/usePosterColors';
-import { Heart, ChevronLeft, ChevronRight, Play, Download, Plus, Share2, Youtube, ArrowLeft } from 'lucide-react';
+import { Heart, ChevronLeft, ChevronRight, Play, Download, Share2, Youtube, ArrowLeft } from 'lucide-react';
 import { Navbar } from './Navbar';
 
 interface Movie {
@@ -68,11 +68,23 @@ export function MovieViewer({ movie, genres, onClose, onActorClick, isFavorite, 
       
       setLoadingRecommendations(true);
       try {
-        const response = await fetch(
+        // Try recommendations first
+        const recommendationsResponse = await fetch(
           `https://api.themoviedb.org/3/movie/${movie.id}/recommendations?api_key=${apiKey}&language=pt-BR&page=1`
         );
-        const data = await response.json();
-        setRecommendations(data.results?.slice(0, 10) || []);
+        const recommendationsData = await recommendationsResponse.json();
+        let results = recommendationsData.results?.slice(0, 10) || [];
+        
+        // If no recommendations, use similar movies as fallback
+        if (results.length === 0) {
+          const similarResponse = await fetch(
+            `https://api.themoviedb.org/3/movie/${movie.id}/similar?api_key=${apiKey}&language=pt-BR&page=1`
+          );
+          const similarData = await similarResponse.json();
+          results = similarData.results?.slice(0, 10) || [];
+        }
+        
+        setRecommendations(results);
       } catch (error) {
         console.error('Error fetching recommendations:', error);
         setRecommendations([]);
@@ -140,6 +152,28 @@ export function MovieViewer({ movie, genres, onClose, onActorClick, isFavorite, 
     return date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
   };
 
+  // Check if movie is in theaters (release date is in the future or recent)
+  const isInTheaters = () => {
+    if (!movie.release_date) return false;
+    const releaseDate = new Date(movie.release_date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    // Consider movies released in the last 3 months as "in theaters"
+    const threeMonthsAgo = new Date(today);
+    threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+    return releaseDate >= threeMonthsAgo;
+  };
+
+  // Get streaming link
+  const getStreamingLink = () => {
+    if (movie.watch_providers && movie.watch_providers.length > 0) {
+      // Link to JustWatch search for the movie
+      const searchQuery = encodeURIComponent(movie.title);
+      return `https://www.justwatch.com/br/busca?q=${searchQuery}`;
+    }
+    return null;
+  };
+
   const handleShare = async () => {
     if (navigator.share) {
       try {
@@ -158,35 +192,50 @@ export function MovieViewer({ movie, genres, onClose, onActorClick, isFavorite, 
   };
 
   return (
-    <div className="relative h-full w-full overflow-hidden flex flex-col bg-black" style={{ pointerEvents: 'auto' }}>
-      {/* Blurred poster background layer - Behind main poster */}
+    <div className="relative h-full w-full flex flex-col bg-black" style={{ pointerEvents: 'auto', top: 0, left: 0, right: 0, bottom: 0 }}>
+      {/* Blurred poster background layer - Behind main poster - Limited to poster section */}
       {movie.poster_path && (
         <div 
-          className="absolute inset-0 -z-20 transition-all duration-700"
+          className="absolute -z-20 transition-all duration-700"
           style={{
             backgroundImage: `url(${imageBaseUrl}${movie.poster_path})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             filter: 'blur(80px) brightness(0.15)',
             transform: 'scale(1.3)',
+            top: `calc(-1 * env(safe-area-inset-top, 0px))`,
+            left: 0,
+            right: 0,
+            height: 'calc(100vw * 9 / 16 + env(safe-area-inset-top, 0px))',
+            paddingTop: 'env(safe-area-inset-top, 0px)',
           }}
         />
       )}
 
-      {/* Subtle dark overlay - Apple TV style */}
+      {/* Subtle dark overlay - Apple TV style - Limited to poster section */}
       <div 
-        className="absolute inset-0 -z-10 transition-all duration-700"
+        className="absolute -z-10 transition-all duration-700"
         style={{
           background: 'radial-gradient(circle at center, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0.6) 70%, rgba(0, 0, 0, 0.9) 100%)',
+          top: `calc(-1 * env(safe-area-inset-top, 0px))`,
+          left: 0,
+          right: 0,
+          height: 'calc(100vw * 9 / 16 + env(safe-area-inset-top, 0px))',
         }}
       />
 
       {/* Main Content - Scrollable */}
-      <div className="flex-1 overflow-y-auto scrollbar-hide" style={{ paddingBottom: '100px', pointerEvents: 'auto' }}>
-        {/* Poster Section - Full bleed */}
-        <div className="relative w-full">
-          {/* Poster Image - Full height, no blur */}
-          <div className="relative w-full aspect-[9/16] -mt-16">
+      <div className="flex-1 overflow-y-auto scrollbar-hide bg-black" style={{ paddingBottom: '80px', pointerEvents: 'auto', backgroundColor: '#000000' }}>
+        {/* Poster Section - Full bleed até status bar */}
+        <div className="relative w-full" style={{ marginTop: 0, paddingTop: 0 }}>
+          {/* Poster Image - Full height, no blur, extends to status bar */}
+          <div 
+            className="relative w-full aspect-[9/16]" 
+            style={{ 
+              marginTop: `calc(-1 * env(safe-area-inset-top, 0px))`,
+              paddingTop: 'env(safe-area-inset-top, 0px)',
+            }}
+          >
             {movie.poster_path ? (
               <ImageWithFallback
                 src={`${imageBaseUrl}${movie.poster_path}`}
@@ -199,12 +248,12 @@ export function MovieViewer({ movie, genres, onClose, onActorClick, isFavorite, 
               </div>
             )}
             
-            {/* Subtle fade at bottom - Apple TV style smooth transition */}
+            {/* Fade at bottom - starts only in the last 30% (from 70%) */}
             <div 
               className="absolute bottom-0 left-0 right-0 pointer-events-none z-[5]"
               style={{
-                height: '280px',
-                background: 'linear-gradient(to top, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0.95) 15%, rgba(0, 0, 0, 0.85) 30%, rgba(0, 0, 0, 0.7) 50%, rgba(0, 0, 0, 0.4) 70%, rgba(0, 0, 0, 0.1) 85%, rgba(0, 0, 0, 0) 100%)',
+                height: '30%',
+                background: 'linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0.85) 25%, rgba(0,0,0,0.6) 50%, rgba(0,0,0,0.3) 75%, rgba(0,0,0,0) 100%)',
               }}
             />
 
@@ -231,10 +280,10 @@ export function MovieViewer({ movie, genres, onClose, onActorClick, isFavorite, 
             )}
           </div>
 
-          {/* Content overlay on poster - positioned at bottom */}
-          <div className="relative px-6 z-20" style={{ marginTop: '-168px' }}>
+          {/* Content overlay on poster - starts only in the last 30% (from 70%) */}
+          <div className="absolute left-0 right-0 px-6 z-20" style={{ top: '549px', bottom: 0, paddingBottom: '20px', left: '-9px' }}>
             {/* Movie Title */}
-            <h1 className="text-white mb-3 leading-tight text-center drop-shadow-lg" style={{ fontFamily: 'SF Pro Display', fontWeight: 700, fontSize: '26px' }}>
+            <h1 className="text-white mb-3 leading-tight text-center drop-shadow-lg" style={{ fontFamily: 'SF Pro Display', fontWeight: 700, fontSize: '30px' }}>
               {movie.title}
             </h1>
 
@@ -270,9 +319,9 @@ export function MovieViewer({ movie, genres, onClose, onActorClick, isFavorite, 
               )}
               <button 
                 onClick={() => onToggleFavorite(movie.id)}
-                className="bg-white/22 backdrop-blur-md rounded-full p-3 hover:bg-white/35 transition-all active:scale-95"
+                className={`bg-white/22 backdrop-blur-md rounded-full p-3 hover:bg-white/35 transition-all active:scale-95 ${isFavorite ? 'bg-white/35' : ''}`}
               >
-                <Plus className="w-5 h-5 text-white" />
+                <Heart className={`w-5 h-5 ${isFavorite ? 'text-white fill-white' : 'text-white'}`} />
               </button>
               <button 
                 onClick={handleShare}
@@ -283,20 +332,38 @@ export function MovieViewer({ movie, genres, onClose, onActorClick, isFavorite, 
             </div>
 
             {/* Play Button */}
-            {movie.trailer_key ? (
+            {getStreamingLink() ? (
+              <a
+                href={getStreamingLink()}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full bg-white hover:bg-white/90 h-[50px] rounded-[8px] flex items-center justify-center gap-3 px-4 py-2 shadow-lg transition-all active:scale-95"
+              >
+                <Play className="w-5 h-5 text-black fill-black" />
+                <p className="font-['Montserrat:Bold',sans-serif] text-black text-[16px]">
+                  Assistir
+                </p>
+              </a>
+            ) : isInTheaters() ? (
+              <div className="w-full bg-white/20 backdrop-blur-md h-[50px] rounded-[8px] flex items-center justify-center px-4 py-2">
+                <p className="font-['Montserrat:Regular',sans-serif] text-white/70 text-[14px]">
+                  Disponível só nos cinemas
+                </p>
+              </div>
+            ) : movie.trailer_key ? (
               <a
                 href={`https://www.youtube.com/watch?v=${movie.trailer_key}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full bg-white hover:bg-white/90 h-[50px] rounded-[8px] flex items-center justify-center gap-3 px-4 py-2 shadow-lg transition-all active:scale-95 mb-8"
+                className="w-full bg-white hover:bg-white/90 h-[50px] rounded-[8px] flex items-center justify-center gap-3 px-4 py-2 shadow-lg transition-all active:scale-95"
               >
                 <Play className="w-5 h-5 text-black fill-black" />
                 <p className="font-['Montserrat:Bold',sans-serif] text-black text-[16px]">
-                  Play
+                  Ver Trailer
                 </p>
               </a>
             ) : (
-              <div className="w-full bg-white/20 backdrop-blur-md h-[50px] rounded-[8px] flex items-center justify-center px-4 py-2 mb-8">
+              <div className="w-full bg-white/20 backdrop-blur-md h-[50px] rounded-[8px] flex items-center justify-center px-4 py-2">
                 <p className="font-['Montserrat:Regular',sans-serif] text-white/70 text-[14px]">
                   Sem trailer no momento
                 </p>
@@ -305,10 +372,10 @@ export function MovieViewer({ movie, genres, onClose, onActorClick, isFavorite, 
           </div>
         </div>
 
-        {/* Additional Information - Below the poster overlay */}
-        <div className="px-6 pt-12 pb-6 flex flex-col gap-6">
+        {/* Additional Information - Below the poster, starts exactly where poster ends */}
+        <div className="px-6 pb-6 flex flex-col gap-[22px] bg-black relative" style={{ backgroundColor: '#000000', zIndex: 10, marginTop: '180px' }}>
           {/* Synopsis */}
-          <div className="mb-8">
+          <div className="bg-black" style={{ backgroundColor: '#000000' }}>
             <p className="font-['Montserrat:SemiBold',sans-serif] text-white text-[16px] mb-2">
               Sinopse:
             </p>
@@ -344,7 +411,7 @@ export function MovieViewer({ movie, genres, onClose, onActorClick, isFavorite, 
 
           {/* Cast */}
           {cast.length > 0 && (
-            <div className="bg-white/10 backdrop-blur-md rounded-[10px] p-4 mb-8">
+            <div className="bg-white/10 backdrop-blur-md rounded-[10px] p-4">
               <p className="font-['Montserrat:SemiBold',sans-serif] text-white text-[16px] mb-4">
                 Elenco:
               </p>
@@ -355,7 +422,7 @@ export function MovieViewer({ movie, genres, onClose, onActorClick, isFavorite, 
                     onClick={() => onActorClick?.(actor)}
                     className="flex flex-col gap-2 items-center shrink-0 w-[90px] group"
                   >
-                    <div className="bg-[#d9d9d9] h-[130px] w-full rounded-[8px] overflow-hidden shadow-md group-hover:scale-105 transition-transform">
+                    <div className="bg-[#d9d9d9] w-[90px] h-[90px] rounded-full overflow-hidden shadow-md group-hover:scale-105 transition-transform">
                       {actor.profile_path ? (
                         <ImageWithFallback
                           src={`${imageBaseUrl}${actor.profile_path}`}
@@ -378,66 +445,52 @@ export function MovieViewer({ movie, genres, onClose, onActorClick, isFavorite, 
           )}
 
           {/* Recommendations */}
+          <p className="font-['Montserrat:SemiBold',sans-serif] text-white text-[16px] mb-4">
+            Recomendações:
+          </p>
           {loadingRecommendations ? (
-            <div className="bg-white/10 backdrop-blur-md rounded-[10px] p-4">
-              <p className="font-['Montserrat:SemiBold',sans-serif] text-white text-[16px] mb-2">
-                Recomendações:
-              </p>
-              <p className="font-['Montserrat:Light',sans-serif] text-white/90 text-[14px] leading-relaxed">
-                Carregando...
-              </p>
-            </div>
+            <p className="font-['Montserrat:Light',sans-serif] text-white/90 text-[14px] leading-relaxed">
+              Carregando...
+            </p>
           ) : recommendations.length > 0 ? (
-            <div className="bg-white/10 backdrop-blur-md rounded-[10px] p-4">
-              <p className="font-['Montserrat:SemiBold',sans-serif] text-white text-[16px] mb-4">
-                Recomendações:
-              </p>
-              <div className="flex gap-3 w-full overflow-x-auto pb-2 scrollbar-hide">
-                {recommendations.map((recommendation) => (
-                  <button
-                    key={recommendation.id}
-                    onClick={() => {
-                      // This would need to be handled by parent component
-                      // For now, just close and let parent handle navigation
-                      onClose();
-                    }}
-                    className="flex flex-col gap-2 items-center shrink-0 w-[90px] group"
-                  >
-                    <div className="bg-[#d9d9d9] h-[130px] w-full rounded-[8px] overflow-hidden shadow-md group-hover:scale-105 transition-transform">
-                      {recommendation.poster_path ? (
-                        <ImageWithFallback
-                          src={`${imageBaseUrl}${recommendation.poster_path}`}
-                          alt={recommendation.title}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-white/30 text-[12px]">
-                          N/A
-                        </div>
-                      )}
-                    </div>
-                    <p className="font-['Montserrat:Regular',sans-serif] text-white/90 text-[13px] text-center w-full break-words group-hover:text-white transition-colors">
-                      {recommendation.title}
-                    </p>
-                  </button>
-                ))}
-              </div>
+            <div className="flex gap-3 w-full overflow-x-auto pb-2 scrollbar-hide">
+              {recommendations.map((recommendation) => (
+                <button
+                  key={recommendation.id}
+                  onClick={() => {
+                    // This would need to be handled by parent component
+                    // For now, just close and let parent handle navigation
+                    onClose();
+                  }}
+                  className="flex flex-col gap-2 items-center shrink-0 w-[90px] group"
+                >
+                  <div className="bg-[#d9d9d9] h-[130px] w-full rounded-[8px] overflow-hidden shadow-md group-hover:scale-105 transition-transform">
+                    {recommendation.poster_path ? (
+                      <ImageWithFallback
+                        src={`${imageBaseUrl}${recommendation.poster_path}`}
+                        alt={recommendation.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-white/30 text-[12px]">
+                        N/A
+                      </div>
+                    )}
+                  </div>
+                  <p className="font-['Montserrat:Regular',sans-serif] text-white/90 text-[13px] text-center w-full break-words group-hover:text-white transition-colors">
+                    {recommendation.title}
+                  </p>
+                </button>
+              ))}
             </div>
-          ) : null}
+          ) : (
+            <p className="font-['Montserrat:Light',sans-serif] text-white/70 text-[14px]">
+              Nenhuma recomendação disponível no momento.
+            </p>
+          )}
         </div>
       </div>
 
-      {/* Navbar */}
-      {onNavigate && (
-        <div className="fixed bottom-0 left-0 right-0 z-[9999]" style={{ pointerEvents: 'auto' }}>
-          <Navbar 
-            currentView={currentView}
-            onNavigate={onNavigate}
-            hasActiveFilters={hasActiveFilters}
-            favoritesCount={favoritesCount}
-          />
-        </div>
-      )}
     </div>
   );
 }

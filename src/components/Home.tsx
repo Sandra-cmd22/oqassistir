@@ -81,6 +81,7 @@ interface HomeProps {
 export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgicMovies, tvShows, onMovieClick, onTVShowClick, onActorClick, apiKey, genres = {}, selectedGenres = [], selectedMonth = null, onGenreToggle, onFilterClick }: HomeProps) {
   const imageBaseUrl = 'https://image.tmdb.org/t/p/w300';
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Movie[]>([]);
   const [searchTVResults, setSearchTVResults] = useState<TVShow[]>([]);
   const [searchActorResults, setSearchActorResults] = useState<Actor[]>([]);
@@ -110,6 +111,25 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
     return date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
   };
 
+  // Debounce search query - only search after 3 characters and 300ms delay
+  useEffect(() => {
+    if (searchQuery.length === 0) {
+      setDebouncedSearchQuery('');
+      return;
+    }
+
+    if (searchQuery.length < 3) {
+      setDebouncedSearchQuery('');
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
   // Filter movies based on search
   const filteredUpcomingMovies = upcomingMovies.filter(movie =>
     movie.title.toLowerCase().includes(searchQuery.toLowerCase())
@@ -127,170 +147,11 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
     // Check if there are active filters
     const hasActiveFilters = selectedGenres.length > 0 || selectedMonth !== null;
     
-    if (searchQuery || hasActiveFilters) {
-      setIsSearching(true);
-      
-      // Build discover URL with filters
-      const buildDiscoverUrl = () => {
-        const params = new URLSearchParams({
-          api_key: apiKey,
-          language: 'pt-BR',
-          sort_by: 'popularity.desc',
-          page: '1'
-        });
-
-        // Add query if provided
-        if (searchQuery) {
-          params.append('query', searchQuery);
-        }
-
-        // Add genre filters
-        if (selectedGenres.length > 0) {
-          params.append('with_genres', selectedGenres.join(','));
-        }
-
-        // Add month filter (convert to date range)
-        if (selectedMonth !== null) {
-          const currentYear = new Date().getFullYear();
-          const monthStart = `${currentYear}-${String(selectedMonth + 1).padStart(2, '0')}-01`;
-          const monthEnd = `${currentYear}-${String(selectedMonth + 1).padStart(2, '0')}-31`;
-          params.append('primary_release_date.gte', monthStart);
-          params.append('primary_release_date.lte', monthEnd);
-        }
-
-        return `https://api.themoviedb.org/3/discover/movie?${params.toString()}`;
-      };
-
-      // Use discover API if filters are active, otherwise use search API
-      const hasFilters = selectedGenres.length > 0 || selectedMonth !== null;
-      const searchUrl = hasFilters 
-        ? buildDiscoverUrl()
-        : searchQuery 
-          ? `https://api.themoviedb.org/3/search/movie?api_key=${apiKey}&query=${searchQuery}&language=pt-BR`
-          : null;
-      
-      // Buscar filmes (only if we have a URL or searchQuery)
-      if (searchUrl) {
-        fetch(searchUrl)
-          .then(response => response.json())
-          .then(async (data) => {
-            const movies = data.results || [];
-            // Buscar imdb_id para cada filme
-            const moviesWithImdb = await Promise.all(
-              movies.slice(0, 20).map(async (movie: Movie) => {
-                try {
-                  const detailsResponse = await fetch(
-                    `https://api.themoviedb.org/3/movie/${movie.id}?api_key=${apiKey}`
-                  );
-                  const details = await detailsResponse.json();
-                  return { ...movie, imdb_id: details.imdb_id };
-                } catch {
-                  return movie;
-                }
-              })
-            );
-            setSearchResults(moviesWithImdb);
-            setIsSearching(false);
-          })
-          .catch(error => {
-            console.error('Error fetching search results:', error);
-            setSearchResults([]);
-            setIsSearching(false);
-          });
-      } else if (!searchQuery) {
-        // If no search query and no filters, clear results
-        setSearchResults([]);
-        setIsSearching(false);
-      }
-
-      // Buscar séries
-      fetch(`https://api.themoviedb.org/3/search/tv?api_key=${apiKey}&query=${searchQuery}&language=pt-BR`)
-        .then(response => response.json())
-        .then(data => {
-          setSearchTVResults(data.results || []);
-        })
-        .catch(error => {
-          console.error('Error fetching TV search results:', error);
-          setSearchTVResults([]);
-        });
-
-      // Buscar atores/atrizes
-      fetch(`https://api.themoviedb.org/3/search/person?api_key=${apiKey}&query=${searchQuery}&language=pt-BR`)
-        .then(response => response.json())
-        .then(data => {
-          setSearchActorResults(data.results || []);
-        })
-        .catch(error => {
-          console.error('Error fetching actor search results:', error);
-          setSearchActorResults([]);
-        });
-
-      // Buscar coleções
-      fetch(`https://api.themoviedb.org/3/search/collection?api_key=${apiKey}&query=${searchQuery}&language=pt-BR`)
-        .then(response => response.json())
-        .then(data => {
-          setSearchCollectionResults(data.results || []);
-        })
-        .catch(error => {
-          console.error('Error fetching collection search results:', error);
-          setSearchCollectionResults([]);
-        });
-
-      // Buscar empresas
-      fetch(`https://api.themoviedb.org/3/search/company?api_key=${apiKey}&query=${searchQuery}`)
-        .then(response => response.json())
-        .then(data => {
-          setSearchCompanyResults(data.results || []);
-        })
-        .catch(error => {
-          console.error('Error fetching company search results:', error);
-          setSearchCompanyResults([]);
-        });
-
-      // Buscar palavras-chave
-      fetch(`https://api.themoviedb.org/3/search/keyword?api_key=${apiKey}&query=${searchQuery}`)
-        .then(response => response.json())
-        .then(data => {
-          setSearchKeywordResults(data.results || []);
-        })
-        .catch(error => {
-          console.error('Error fetching keyword search results:', error);
-          setSearchKeywordResults([]);
-        });
-
-      // Se encontrou um gênero, buscar filmes desse gênero
-      if (genreMatch) {
-        const genreId = parseInt(genreMatch[0]);
-        fetch(`https://api.themoviedb.org/3/discover/movie?api_key=${apiKey}&language=pt-BR&with_genres=${genreId}&sort_by=popularity.desc&page=1`)
-          .then(response => response.json())
-          .then(async (data) => {
-            const movies = data.results || [];
-            const moviesWithImdb = await Promise.all(
-              movies.slice(0, 20).map(async (movie: Movie) => {
-                try {
-                  const detailsResponse = await fetch(
-                    `https://api.themoviedb.org/3/movie/${movie.id}?api_key=${apiKey}`
-                  );
-                  const details = await detailsResponse.json();
-                  return { ...movie, imdb_id: details.imdb_id };
-                } catch {
-                  return movie;
-                }
-              })
-            );
-            setGenreSearchResults(moviesWithImdb);
-            setIsSearching(false);
-          })
-          .catch(error => {
-            console.error('Error fetching genre movies:', error);
-            setGenreSearchResults([]);
-            setIsSearching(false);
-          });
-      } else {
-        setGenreSearchResults([]);
-        setIsSearching(false);
-      }
-    } else {
+    // Only search if we have at least 3 characters or active filters
+    const shouldSearch = (debouncedSearchQuery && debouncedSearchQuery.length >= 3) || hasActiveFilters;
+    
+    if (!shouldSearch) {
+      // Clear all results if no search
       setSearchResults([]);
       setSearchTVResults([]);
       setSearchActorResults([]);
@@ -298,14 +159,232 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
       setSearchCompanyResults([]);
       setSearchKeywordResults([]);
       setGenreSearchResults([]);
-      if (!searchQuery) {
-        setIsSearching(false);
-      }
+      setIsSearching(false);
+      return;
     }
-  }, [searchQuery, apiKey, genres, selectedGenres, selectedMonth]);
+
+    setIsSearching(true);
+    
+    // AbortController for cancelling previous requests
+    const abortController = new AbortController();
+    const signal = abortController.signal;
+    
+    // Build discover URL with filters
+    const buildDiscoverUrl = () => {
+      const params = new URLSearchParams({
+        api_key: apiKey,
+        language: 'pt-BR',
+        sort_by: 'popularity.desc',
+        page: '1'
+      });
+
+      // Add query if provided
+      if (debouncedSearchQuery) {
+        params.append('query', debouncedSearchQuery);
+      }
+
+      // Add genre filters
+      if (selectedGenres.length > 0) {
+        params.append('with_genres', selectedGenres.join(','));
+      }
+
+      // Add month filter (convert to date range)
+      if (selectedMonth !== null) {
+        const currentYear = new Date().getFullYear();
+        const monthStart = `${currentYear}-${String(selectedMonth + 1).padStart(2, '0')}-01`;
+        const monthEnd = `${currentYear}-${String(selectedMonth + 1).padStart(2, '0')}-31`;
+        params.append('primary_release_date.gte', monthStart);
+        params.append('primary_release_date.lte', monthEnd);
+      }
+
+      return `https://api.themoviedb.org/3/discover/movie?${params.toString()}`;
+    };
+
+    // Use discover API if filters are active, otherwise use search API
+    const hasFilters = selectedGenres.length > 0 || selectedMonth !== null;
+    const searchUrl = hasFilters 
+      ? buildDiscoverUrl()
+      : debouncedSearchQuery 
+        ? `https://api.themoviedb.org/3/search/movie?api_key=${apiKey}&query=${encodeURIComponent(debouncedSearchQuery)}&language=pt-BR`
+        : null;
+    
+    // Array to track all fetch promises
+    const fetchPromises: Promise<void>[] = [];
+    
+    // Buscar filmes (only if we have a URL or debouncedSearchQuery)
+    if (searchUrl) {
+      const moviePromise = fetch(searchUrl, { signal })
+        .then(response => {
+          if (!response.ok) throw new Error('Failed to fetch movies');
+          return response.json();
+        })
+        .then(async (data) => {
+          if (signal.aborted) return;
+          const movies = data.results || [];
+          // Buscar imdb_id para cada filme (limitado a 20 para performance)
+          const moviesWithImdb = await Promise.all(
+            movies.slice(0, 20).map(async (movie: Movie) => {
+              if (signal.aborted) return movie;
+              try {
+                const detailsResponse = await fetch(
+                  `https://api.themoviedb.org/3/movie/${movie.id}?api_key=${apiKey}`,
+                  { signal }
+                );
+                const details = await detailsResponse.json();
+                return { ...movie, imdb_id: details.imdb_id };
+              } catch {
+                return movie;
+              }
+            })
+          );
+          if (!signal.aborted) {
+            setSearchResults(moviesWithImdb);
+          }
+        })
+        .catch(error => {
+          if (error.name === 'AbortError') return;
+          console.error('Error fetching search results:', error);
+          if (!signal.aborted) {
+            setSearchResults([]);
+          }
+        });
+      fetchPromises.push(moviePromise);
+    }
+
+    // Only fetch other results if we have a search query (not just filters)
+    if (debouncedSearchQuery && debouncedSearchQuery.length >= 3) {
+      // Buscar séries
+      const tvPromise = fetch(`https://api.themoviedb.org/3/search/tv?api_key=${apiKey}&query=${encodeURIComponent(debouncedSearchQuery)}&language=pt-BR`, { signal })
+        .then(response => {
+          if (!response.ok) throw new Error('Failed to fetch TV shows');
+          return response.json();
+        })
+        .then(data => {
+          if (!signal.aborted) {
+            setSearchTVResults(data.results || []);
+          }
+        })
+        .catch(error => {
+          if (error.name === 'AbortError') return;
+          console.error('Error fetching TV search results:', error);
+          if (!signal.aborted) {
+            setSearchTVResults([]);
+          }
+        });
+      fetchPromises.push(tvPromise);
+
+      // Buscar atores/atrizes
+      const actorPromise = fetch(`https://api.themoviedb.org/3/search/person?api_key=${apiKey}&query=${encodeURIComponent(debouncedSearchQuery)}&language=pt-BR`, { signal })
+        .then(response => {
+          if (!response.ok) throw new Error('Failed to fetch actors');
+          return response.json();
+        })
+        .then(data => {
+          if (!signal.aborted) {
+            setSearchActorResults(data.results || []);
+          }
+        })
+        .catch(error => {
+          if (error.name === 'AbortError') return;
+          console.error('Error fetching actor search results:', error);
+          if (!signal.aborted) {
+            setSearchActorResults([]);
+          }
+        });
+      fetchPromises.push(actorPromise);
+
+      // Buscar coleções
+      const collectionPromise = fetch(`https://api.themoviedb.org/3/search/collection?api_key=${apiKey}&query=${encodeURIComponent(debouncedSearchQuery)}&language=pt-BR`, { signal })
+        .then(response => {
+          if (!response.ok) throw new Error('Failed to fetch collections');
+          return response.json();
+        })
+        .then(data => {
+          if (!signal.aborted) {
+            setSearchCollectionResults(data.results || []);
+          }
+        })
+        .catch(error => {
+          if (error.name === 'AbortError') return;
+          console.error('Error fetching collection search results:', error);
+          if (!signal.aborted) {
+            setSearchCollectionResults([]);
+          }
+        });
+      fetchPromises.push(collectionPromise);
+
+      // Buscar empresas
+      const companyPromise = fetch(`https://api.themoviedb.org/3/search/company?api_key=${apiKey}&query=${encodeURIComponent(debouncedSearchQuery)}`, { signal })
+        .then(response => {
+          if (!response.ok) throw new Error('Failed to fetch companies');
+          return response.json();
+        })
+        .then(data => {
+          if (!signal.aborted) {
+            setSearchCompanyResults(data.results || []);
+          }
+        })
+        .catch(error => {
+          if (error.name === 'AbortError') return;
+          console.error('Error fetching company search results:', error);
+          if (!signal.aborted) {
+            setSearchCompanyResults([]);
+          }
+        });
+      fetchPromises.push(companyPromise);
+
+      // Buscar palavras-chave
+      const keywordPromise = fetch(`https://api.themoviedb.org/3/search/keyword?api_key=${apiKey}&query=${encodeURIComponent(debouncedSearchQuery)}`, { signal })
+        .then(response => {
+          if (!response.ok) throw new Error('Failed to fetch keywords');
+          return response.json();
+        })
+        .then(data => {
+          if (!signal.aborted) {
+            setSearchKeywordResults(data.results || []);
+          }
+        })
+        .catch(error => {
+          if (error.name === 'AbortError') return;
+          console.error('Error fetching keyword search results:', error);
+          if (!signal.aborted) {
+            setSearchKeywordResults([]);
+          }
+        });
+      fetchPromises.push(keywordPromise);
+    } else {
+      // Clear these if no search query
+      setSearchTVResults([]);
+      setSearchActorResults([]);
+      setSearchCollectionResults([]);
+      setSearchCompanyResults([]);
+      setSearchKeywordResults([]);
+    }
+
+    // Always clear genre search results (removed genreMatch logic)
+    setGenreSearchResults([]);
+
+    // Wait for all promises to complete
+    Promise.all(fetchPromises)
+      .then(() => {
+        if (!signal.aborted) {
+          setIsSearching(false);
+        }
+      })
+      .catch(() => {
+        if (!signal.aborted) {
+          setIsSearching(false);
+        }
+      });
+
+    // Cleanup: abort requests when dependencies change
+    return () => {
+      abortController.abort();
+    };
+  }, [debouncedSearchQuery, apiKey, selectedGenres, selectedMonth]);
 
   // Featured movie para o header destacado
-  const featuredMovie = !searchQuery && (popularMovies.length > 0 || upcomingMovies.length > 0)
+  const featuredMovie = !debouncedSearchQuery && (popularMovies.length > 0 || upcomingMovies.length > 0)
     ? (popularMovies[0] || upcomingMovies[0])
     : null;
   
@@ -323,7 +402,7 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
   };
 
   return (
-    <div className="bg-gradient-to-br from-[#0a0a0f] via-[#1a0f2e] to-[#2d1b3d] min-h-screen overflow-y-auto scrollbar-hide pb-[72px]">
+    <div className="bg-black min-h-screen overflow-y-auto scrollbar-hide pb-[72px]" style={{ backgroundColor: '#000000' }}>
       {/* Header */}
       <div className="px-6 pt-8 pb-4">
         {/* Logo */}
@@ -365,7 +444,7 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
 
 
       {/* Search Results */}
-      {searchQuery && (
+      {debouncedSearchQuery && (
         <div className="mb-8">
           {/* Movies Results */}
           {searchResults.length > 0 && (
@@ -752,10 +831,10 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
       )}
 
       {/* Now Playing Section */}
-      {!searchQuery && nowPlayingMovies.length === 0 && popularMovies.length === 0 && upcomingMovies.length === 0 && (
+      {!debouncedSearchQuery && nowPlayingMovies.length === 0 && popularMovies.length === 0 && upcomingMovies.length === 0 && (
         <SkeletonSection />
       )}
-      {!searchQuery && nowPlayingMovies.length > 0 && (
+      {!debouncedSearchQuery && nowPlayingMovies.length > 0 && (
         <div className="mb-8">
           <div className="px-6 mb-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -804,7 +883,7 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
       )}
 
       {/* This Week Section */}
-      {!searchQuery && filteredThisWeekMovies.length > 0 && (
+      {!debouncedSearchQuery && filteredThisWeekMovies.length > 0 && (
         <div className="mb-8">
           <div className="px-6 mb-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -859,7 +938,7 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
       )}
 
       {/* Nostalgic Movies Section - Indicações para ver em casa */}
-      {!searchQuery && nostalgicMovies.length > 0 && (
+      {!debouncedSearchQuery && nostalgicMovies.length > 0 && (
         <div className="mb-8">
           <div className="px-6 mb-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -919,7 +998,7 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
       )}
 
       {/* Popular Movies Section */}
-      {!searchQuery && filteredPopularMovies.length > 0 && (
+      {!debouncedSearchQuery && filteredPopularMovies.length > 0 && (
         <div className="mb-8">
           <div className="px-6 mb-4 flex items-center justify-between">
             <h2 className="text-white text-[20px]" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 900 }}>
@@ -965,7 +1044,7 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
       )}
 
       {/* TV Shows Section */}
-      {!searchQuery && tvShows.length > 0 && (
+      {!debouncedSearchQuery && tvShows.length > 0 && (
         <div className="mb-8">
           <div className="px-6 mb-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -1022,7 +1101,7 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
       )}
 
       {/* All Upcoming Section */}
-      {!searchQuery && (
+      {!debouncedSearchQuery && (
         <div className="mb-8">
           <div className="px-6 mb-4">
             <h2 className="text-white text-[20px]" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 900 }}>
