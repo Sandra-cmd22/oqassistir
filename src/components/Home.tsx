@@ -4,7 +4,7 @@ import { Search, Loader2, SlidersHorizontal } from 'lucide-react';
 import { FilmStrip, Calendar, House, Television } from 'phosphor-react';
 import { StreamingBadge } from './StreamingBadge';
 import { SkeletonSection } from './SkeletonCard';
-import logoImage from '../assets/logomovie.png';
+import logoImage from '../assets/logo.oficial.png';
 
 interface Movie {
   id: number;
@@ -407,7 +407,7 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
       <div className="px-6 pt-8 pb-4">
         {/* Logo */}
         <div className="mb-4">
-          <div className="h-[36px] w-auto">
+          <div className="h-[24px] w-auto">
             <img 
               src={logoImage} 
               alt="OQ Assistir" 
