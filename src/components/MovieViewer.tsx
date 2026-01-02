@@ -227,63 +227,75 @@ export function MovieViewer({ movie, genres, onClose, onActorClick, isFavorite, 
 
       {/* Main Content - Scrollable */}
       <div className="flex-1 overflow-y-auto scrollbar-hide bg-black" style={{ paddingBottom: '80px', pointerEvents: 'auto', backgroundColor: '#000000' }}>
-        {/* Poster Section - Full bleed até status bar (Padrão Apple TV) */}
-        <section 
+        {/* Poster Section - Full bleed até status bar */}
+        <div 
           className="relative w-full bg-black" 
           style={{ 
-            height: '100svh',
+            marginTop: `calc(-1 * env(safe-area-inset-top, 0px))`,
             paddingTop: 'env(safe-area-inset-top, 0px)',
+            backgroundColor: '#000000',
           }}
         >
-          {/* Poster Image - Full bleed, vai até a status bar */}
-          {movie.poster_path ? (
-            <ImageWithFallback
-              src={`${imageBaseUrl}${movie.poster_path}`}
-              alt={movie.title}
-              className="absolute inset-0 h-full w-full object-cover"
-            />
-          ) : (
-            <div className="absolute inset-0 h-full w-full bg-[#d9d9d9] flex items-center justify-center text-white/50">
-              Sem imagem
-            </div>
-          )}
-          
-          {/* Overlay escuro no final (35% do bottom) - Padrão Apple TV */}
-          <div className="absolute bottom-0 left-0 right-0 h-[35%] bg-gradient-to-t from-black via-black/70 to-transparent pointer-events-none z-[5]" />
-          
-          {/* Fade at top - ensures status bar contrast */}
+          {/* Poster Image - Full height, no blur, extends to status bar */}
           <div 
-            className="absolute top-0 left-0 right-0 pointer-events-none z-[5]"
-            style={{
-              height: '20%',
-              background: 'linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0) 100%)',
-            }}
-          />
-
-          {/* Top bar - Back button (fixed) and IMDb rating (absolute) */}
-          {/* Fixed back button */}
-          <div className="fixed left-0 p-4 z-[999]" style={{ top: 'env(safe-area-inset-top, 16px)' }}>
-            <button
-              onClick={onClose}
-              className="bg-black/40 backdrop-blur-md rounded-full p-3 shadow-lg hover:bg-black/60 transition-all active:scale-95 cursor-pointer"
-            >
-              <ArrowLeft className="w-5 h-5 text-white" />
-            </button>
-          </div>
-          
-          {/* Absolute IMDb rating - disappears with scroll */}
-          {movie.vote_average && movie.vote_average > 0 && (
-            <div className="absolute right-0 p-4 z-10" style={{ top: 'env(safe-area-inset-top, 16px)' }}>
-              <div className="bg-black/40 backdrop-blur-md rounded-full px-3 py-1.5 flex items-center gap-1.5 shadow-lg">
-                <span className="font-['Montserrat:Bold',sans-serif] text-white text-[12px]">
-                  IMDb {movie.vote_average.toFixed(1)}
-                </span>
+            className="relative w-full aspect-[9/16]"
+          >
+            {movie.poster_path ? (
+              <ImageWithFallback
+                src={`${imageBaseUrl}${movie.poster_path}`}
+                alt={movie.title}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-[#d9d9d9] flex items-center justify-center text-white/50">
+                Sem imagem
               </div>
-            </div>
-          )}
+            )}
+            
+            {/* Fade at top - ensures status bar contrast */}
+            <div 
+              className="absolute top-0 left-0 right-0 pointer-events-none z-[5]"
+              style={{
+                height: '20%',
+                background: 'linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0) 100%)',
+                paddingTop: 'env(safe-area-inset-top, 0px)',
+              }}
+            />
+            
+            {/* Fade at bottom - starts only in the last 30% (from 70%) */}
+            <div 
+              className="absolute bottom-0 left-0 right-0 pointer-events-none z-[5]"
+              style={{
+                height: '30%',
+                background: 'linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0.85) 25%, rgba(0,0,0,0.6) 50%, rgba(0,0,0,0.3) 75%, rgba(0,0,0,0) 100%)',
+              }}
+            />
 
-          {/* Content overlay on poster - Padrão Apple TV (bottom) */}
-          <div className="absolute bottom-6 left-4 right-4 z-10 px-6">
+            {/* Top bar - Back button (fixed) and IMDb rating (absolute) */}
+            {/* Fixed back button */}
+            <div className="fixed left-0 p-4 z-[999]" style={{ top: 'env(safe-area-inset-top, 16px)' }}>
+              <button
+                onClick={onClose}
+                className="bg-black/40 backdrop-blur-md rounded-full p-3 shadow-lg hover:bg-black/60 transition-all active:scale-95 cursor-pointer"
+              >
+                <ArrowLeft className="w-5 h-5 text-white" />
+              </button>
+            </div>
+            
+            {/* Absolute IMDb rating - disappears with scroll */}
+            {movie.vote_average && movie.vote_average > 0 && (
+              <div className="absolute right-0 p-4 z-10" style={{ top: 'env(safe-area-inset-top, 16px)' }}>
+                <div className="bg-black/40 backdrop-blur-md rounded-full px-3 py-1.5 flex items-center gap-1.5 shadow-lg">
+                  <span className="font-['Montserrat:Bold',sans-serif] text-white text-[12px]">
+                    IMDb {movie.vote_average.toFixed(1)}
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Content overlay on poster - starts only in the last 30% (from 70%) */}
+          <div className="absolute left-0 right-0 px-6 z-20" style={{ top: '549px', bottom: 0, paddingBottom: '20px', left: '-9px' }}>
             {/* Movie Title */}
             <h1 className="text-white mb-3 leading-tight text-center drop-shadow-lg" style={{ fontFamily: 'SF Pro Display', fontWeight: 700, fontSize: '30px' }}>
               {movie.title}
@@ -372,10 +384,10 @@ export function MovieViewer({ movie, genres, onClose, onActorClick, isFavorite, 
               </div>
             )}
           </div>
-        </section>
+        </div>
 
-        {/* Additional Information - Below the poster */}
-        <div className="w-full bg-black relative" style={{ backgroundColor: '#000000', zIndex: 10, paddingTop: '24px' }}>
+        {/* Additional Information - Below the poster, starts exactly where poster ends */}
+        <div className="w-full bg-black relative" style={{ backgroundColor: '#000000', zIndex: 10, marginTop: '180px', paddingTop: '24px' }}>
           <div className="w-full max-w-full px-6 pb-6 flex flex-col" style={{ gap: '24px' }}>
             {/* Synopsis */}
             <div className="w-full">
