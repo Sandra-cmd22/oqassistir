@@ -308,7 +308,7 @@ export function TVShowViewer({ show, genres, onClose, onActorClick, isFavorite, 
               <p className="font-['Montserrat:SemiBold',sans-serif] text-white text-[16px] mb-2">
                 Sinopse:
               </p>
-              <p className="font-['Montserrat:Light',sans-serif] text-white/90 text-[14px] leading-relaxed">
+              <p className="text-white/90 text-[14px] leading-relaxed" style={{ fontFamily: 'SF Pro Display', fontWeight: 400 }}>
                 {show.overview || 'Sinopse não disponível.'}
               </p>
             </div>

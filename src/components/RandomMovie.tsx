@@ -488,7 +488,7 @@ export function RandomMovie({ apiKey, genres, onMovieClick, onToggleFavorite, fa
   ];
 
   return (
-    <div className="bg-gradient-to-br from-[#0a0a0f] via-[#1a0f2e] to-[#2d1b3d] min-h-screen overflow-y-auto scrollbar-hide pb-[72px]">
+    <div className="bg-black min-h-screen overflow-y-auto scrollbar-hide pb-[72px]" style={{ backgroundColor: '#000000' }}>
       <div className="px-6 pt-8 pb-6">
         <h1 className="text-white text-[28px] mb-2" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 900 }}>
           Não sei o que assistir

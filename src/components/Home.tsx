@@ -169,19 +169,14 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
     const abortController = new AbortController();
     const signal = abortController.signal;
     
-    // Build discover URL with filters
+    // Build discover URL with filters (only used when there's no search query)
     const buildDiscoverUrl = () => {
       const params = new URLSearchParams({
         api_key: apiKey,
         language: 'pt-BR',
-        sort_by: 'popularity.desc',
+        sort_by: 'title.asc', // Ordem alfabética quando não há busca
         page: '1'
       });
-
-      // Add query if provided
-      if (debouncedSearchQuery) {
-        params.append('query', debouncedSearchQuery);
-      }
 
       // Add genre filters
       if (selectedGenres.length > 0) {
@@ -200,20 +195,74 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
       return `https://api.themoviedb.org/3/discover/movie?${params.toString()}`;
     };
 
-    // Use discover API if filters are active, otherwise use search API
+    // Use search API if there's a query, otherwise use discover API for filters only
     const hasFilters = selectedGenres.length > 0 || selectedMonth !== null;
-    const searchUrl = hasFilters 
-      ? buildDiscoverUrl()
-      : debouncedSearchQuery 
-        ? `https://api.themoviedb.org/3/search/movie?api_key=${apiKey}&query=${encodeURIComponent(debouncedSearchQuery)}&language=pt-BR`
-        : null;
-    
-    // Array to track all fetch promises
     const fetchPromises: Promise<void>[] = [];
     
-    // Buscar filmes (only if we have a URL or debouncedSearchQuery)
-    if (searchUrl) {
+    // Buscar filmes
+    if (debouncedSearchQuery && debouncedSearchQuery.length >= 3) {
+      // Se há texto de busca, sempre usar search API
+      const searchUrl = `https://api.themoviedb.org/3/search/movie?api_key=${apiKey}&query=${encodeURIComponent(debouncedSearchQuery)}&language=pt-BR`;
+      
       const moviePromise = fetch(searchUrl, { signal })
+        .then(response => {
+          if (!response.ok) throw new Error('Failed to fetch movies');
+          return response.json();
+        })
+        .then(async (data) => {
+          if (signal.aborted) return;
+          let movies = data.results || [];
+          
+          // Aplicar filtros localmente se houver
+          if (selectedGenres.length > 0) {
+            movies = movies.filter((movie: Movie) => 
+              movie.genre_ids && movie.genre_ids.some((id: number) => selectedGenres.includes(id))
+            );
+          }
+          
+          if (selectedMonth !== null) {
+            const currentYear = new Date().getFullYear();
+            const targetMonth = selectedMonth + 1;
+            movies = movies.filter((movie: Movie) => {
+              if (!movie.release_date) return false;
+              const releaseDate = new Date(movie.release_date);
+              return releaseDate.getFullYear() === currentYear && releaseDate.getMonth() === selectedMonth;
+            });
+          }
+          
+          // Buscar imdb_id para cada filme (limitado a 20 para performance)
+          const moviesWithImdb = await Promise.all(
+            movies.slice(0, 20).map(async (movie: Movie) => {
+              if (signal.aborted) return movie;
+              try {
+                const detailsResponse = await fetch(
+                  `https://api.themoviedb.org/3/movie/${movie.id}?api_key=${apiKey}`,
+                  { signal }
+                );
+                const details = await detailsResponse.json();
+                return { ...movie, imdb_id: details.imdb_id };
+              } catch {
+                return movie;
+              }
+            })
+          );
+          if (!signal.aborted) {
+            setSearchResults(moviesWithImdb);
+          }
+        })
+        .catch(error => {
+          if (error.name === 'AbortError') return;
+          console.error('Error fetching search results:', error);
+          if (!signal.aborted) {
+            setSearchResults([]);
+          }
+        });
+      fetchPromises.push(moviePromise);
+    } else if (hasFilters && !debouncedSearchQuery) {
+      // Se não há texto mas há filtros, usar discover API
+      const discoverUrl = buildDiscoverUrl();
+      
+      const moviePromise = fetch(discoverUrl, { signal })
         .then(response => {
           if (!response.ok) throw new Error('Failed to fetch movies');
           return response.json();
@@ -243,12 +292,15 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
         })
         .catch(error => {
           if (error.name === 'AbortError') return;
-          console.error('Error fetching search results:', error);
+          console.error('Error fetching discover results:', error);
           if (!signal.aborted) {
             setSearchResults([]);
           }
         });
       fetchPromises.push(moviePromise);
+    } else {
+      // Sem busca e sem filtros, limpar resultados
+      setSearchResults([]);
     }
 
     // Only fetch other results if we have a search query (not just filters)
@@ -404,9 +456,9 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
   return (
     <div className="bg-black min-h-screen overflow-y-auto scrollbar-hide pb-[72px]" style={{ backgroundColor: '#000000' }}>
       {/* Header */}
-      <div className="px-6 pt-8 pb-4">
-        {/* Logo */}
-        <div className="mb-4">
+      <div className="pt-8 pb-4">
+        <div className="px-4 mb-4">
+          {/* Logo */}
           <div className="h-[24px] w-auto">
             <img 
               src={logoImage} 
@@ -417,8 +469,8 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
         </div>
 
         {/* Search Input with Filter Icon */}
-        <div className="flex items-center gap-2 mb-4">
-          <div className="relative flex-1">
+        <div className="px-4 flex items-center gap-2 mb-4 w-full">
+          <div className="relative flex-1 w-full">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/30 z-10 pointer-events-none" />
             <input
               type="text"
@@ -431,7 +483,7 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
               <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40 animate-spin z-10" />
             )}
           </div>
-          {onFilterClick && (
+          {onFilterClick && debouncedSearchQuery && debouncedSearchQuery.length >= 3 && (
             <button
               onClick={onFilterClick}
               className="p-3 bg-white/5 backdrop-blur-xl border border-white/10 hover:bg-white/10 hover:border-white/20 rounded-[16px] transition-all flex-shrink-0"
@@ -449,7 +501,7 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
           {/* Movies Results */}
           {searchResults.length > 0 && (
             <>
-              <div className="px-6 mb-4">
+              <div className="px-4 mb-4">
                 <h2 className="text-white text-[20px]" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 900 }}>
                   Filmes
                 </h2>
@@ -458,7 +510,7 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
                 </p>
               </div>
               
-              <div className="px-6 space-y-3 pb-6">
+              <div className="px-4 space-y-3 pb-6">
                 {searchResults.slice(0, 20).map((movie) => (
                   <button
                     key={`movie-${movie.id}`}
@@ -523,7 +575,7 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
           {/* TV Shows Results */}
           {searchTVResults.length > 0 && (
             <>
-              <div className="px-6 mb-4">
+              <div className="px-4 mb-4">
                 <h2 className="text-white text-[20px]" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 900 }}>
                   Séries
                 </h2>
@@ -532,7 +584,7 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
                 </p>
               </div>
               
-              <div className="px-6 space-y-3 pb-6">
+              <div className="px-4 space-y-3 pb-6">
                 {searchTVResults.slice(0, 20).map((show) => (
                   <button
                     key={`tv-${show.id}`}
@@ -586,7 +638,7 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
           {/* Actors Results */}
           {searchActorResults.length > 0 && (
             <>
-              <div className="px-6 mb-4">
+              <div className="px-4 mb-4">
                 <h2 className="text-white text-[20px]" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 900 }}>
                   Atores e Atrizes
                 </h2>
@@ -595,7 +647,7 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
                 </p>
               </div>
               
-              <div className="px-6 space-y-3 pb-6">
+              <div className="px-4 space-y-3 pb-6">
                 {searchActorResults.slice(0, 20).map((actor) => (
                   <button
                     key={`actor-${actor.id}`}
@@ -638,7 +690,7 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
           {/* Genre Search Results */}
           {genreSearchResults.length > 0 && (
             <>
-              <div className="px-6 mb-4">
+              <div className="px-4 mb-4">
                 <h2 className="text-white text-[20px]" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 900 }}>
                   Filmes por Gênero
                 </h2>
@@ -647,7 +699,7 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
                 </p>
               </div>
               
-              <div className="px-6 space-y-3 pb-6">
+              <div className="px-4 space-y-3 pb-6">
                 {genreSearchResults.slice(0, 20).map((movie) => (
                   <button
                     key={`genre-movie-${movie.id}`}
@@ -696,7 +748,7 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
           {/* Collections Results */}
           {searchCollectionResults.length > 0 && (
             <>
-              <div className="px-6 mb-4">
+              <div className="px-4 mb-4">
                 <h2 className="text-white text-[20px]" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 900 }}>
                   Coleções
                 </h2>
@@ -705,7 +757,7 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
                 </p>
               </div>
               
-              <div className="px-6 space-y-3 pb-6">
+              <div className="px-4 space-y-3 pb-6">
                 {searchCollectionResults.slice(0, 10).map((collection) => (
                   <div
                     key={`collection-${collection.id}`}
@@ -746,7 +798,7 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
           {/* Companies Results */}
           {searchCompanyResults.length > 0 && (
             <>
-              <div className="px-6 mb-4">
+              <div className="px-4 mb-4">
                 <h2 className="text-white text-[20px]" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 900 }}>
                   Empresas de Produção
                 </h2>
@@ -755,7 +807,7 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
                 </p>
               </div>
               
-              <div className="px-6 space-y-3 pb-6">
+              <div className="px-4 space-y-3 pb-6">
                 {searchCompanyResults.slice(0, 10).map((company) => (
                   <div
                     key={`company-${company.id}`}
@@ -796,7 +848,7 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
           {/* Keywords Results */}
           {searchKeywordResults.length > 0 && (
             <>
-              <div className="px-6 mb-4">
+              <div className="px-4 mb-4">
                 <h2 className="text-white text-[20px]" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 900 }}>
                   Palavras-chave
                 </h2>
@@ -805,7 +857,7 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
                 </p>
               </div>
               
-              <div className="px-6 flex flex-wrap gap-2 pb-6">
+              <div className="px-4 flex flex-wrap gap-2 pb-6">
                 {searchKeywordResults.slice(0, 20).map((keyword) => (
                   <span
                     key={`keyword-${keyword.id}`}
@@ -836,7 +888,7 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
       )}
       {!debouncedSearchQuery && nowPlayingMovies.length > 0 && (
         <div className="mb-8">
-          <div className="px-6 mb-4 flex items-center justify-between">
+          <div className="px-4 mb-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <FilmStrip className="w-5 h-5" style={{ color: '#F4F2F2' }} weight="fill" />
               <h2 className="text-white text-[20px]" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 900 }}>
@@ -851,7 +903,7 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
             </button>
           </div>
           
-          <div className={`flex gap-4 ${showAllNowPlaying ? 'flex-wrap px-6' : 'overflow-x-auto scrollbar-hide px-6 pb-2 scroll-smooth'}`}>
+          <div className={`flex gap-4 ${showAllNowPlaying ? 'flex-wrap px-4' : 'overflow-x-auto scrollbar-hide px-4 pb-2 scroll-smooth'}`}>
             {(showAllNowPlaying ? nowPlayingMovies : nowPlayingMovies.slice(0, 10)).map((movie) => (
               <button
                 key={movie.id}
@@ -885,7 +937,7 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
       {/* This Week Section */}
       {!debouncedSearchQuery && filteredThisWeekMovies.length > 0 && (
         <div className="mb-8">
-          <div className="px-6 mb-4 flex items-center justify-between">
+          <div className="px-4 mb-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Calendar className="w-5 h-5" style={{ color: '#F4F2F2' }} weight="fill" />
               <h2 className="text-white text-[20px]" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 900 }}>
@@ -900,7 +952,7 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
             </button>
           </div>
           
-          <div className={`flex gap-4 ${showAllThisWeek ? 'flex-wrap px-6' : 'overflow-x-auto scrollbar-hide px-6 pb-2 scroll-smooth'}`}>
+          <div className={`flex gap-4 ${showAllThisWeek ? 'flex-wrap px-4' : 'overflow-x-auto scrollbar-hide px-4 pb-2 scroll-smooth'}`}>
             {(showAllThisWeek ? filteredThisWeekMovies : filteredThisWeekMovies.slice(0, 10)).map((movie) => (
               <button
                 key={movie.id}
@@ -940,7 +992,7 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
       {/* Nostalgic Movies Section - Indicações para ver em casa */}
       {!debouncedSearchQuery && nostalgicMovies.length > 0 && (
         <div className="mb-8">
-          <div className="px-6 mb-4 flex items-center justify-between">
+          <div className="px-4 mb-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <House className="w-5 h-5" style={{ color: '#F4F2F2' }} weight="fill" />
               <h2 className="text-white text-[20px]" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 900 }}>
@@ -954,11 +1006,11 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
               {showAllNostalgic ? 'Ver menos' : 'Ver tudo'}
             </button>
           </div>
-          <p className="px-6 mb-4 font-['Montserrat:Light',sans-serif] text-white/60 text-[12px]">
+          <p className="px-4 mb-4 font-['Montserrat:Light',sans-serif] text-white/60 text-[12px]">
             Clássicos e filmes antigos que mudam toda semana
           </p>
           
-          <div className={`flex gap-4 ${showAllNostalgic ? 'flex-wrap px-6' : 'overflow-x-auto scrollbar-hide px-6 pb-2 scroll-smooth'}`}>
+          <div className={`flex gap-4 ${showAllNostalgic ? 'flex-wrap px-4' : 'overflow-x-auto scrollbar-hide px-4 pb-2 scroll-smooth'}`}>
             {(showAllNostalgic ? nostalgicMovies : nostalgicMovies.slice(0, 10)).map((movie) => (
               <button
                 key={movie.id}
@@ -1000,7 +1052,7 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
       {/* Popular Movies Section */}
       {!debouncedSearchQuery && filteredPopularMovies.length > 0 && (
         <div className="mb-8">
-          <div className="px-6 mb-4 flex items-center justify-between">
+          <div className="px-4 mb-4 flex items-center justify-between">
             <h2 className="text-white text-[20px]" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 900 }}>
               Mais Populares
             </h2>
@@ -1012,7 +1064,7 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
             </button>
           </div>
           
-          <div className={`flex gap-4 ${showAllPopular ? 'flex-wrap px-6' : 'overflow-x-auto scrollbar-hide px-6 pb-2 scroll-smooth'}`}>
+          <div className={`flex gap-4 ${showAllPopular ? 'flex-wrap px-4' : 'overflow-x-auto scrollbar-hide px-4 pb-2 scroll-smooth'}`}>
             {(showAllPopular ? filteredPopularMovies : filteredPopularMovies.slice(0, 10)).map((movie) => (
               <button
                 key={movie.id}
@@ -1046,7 +1098,7 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
       {/* TV Shows Section */}
       {!debouncedSearchQuery && tvShows.length > 0 && (
         <div className="mb-8">
-          <div className="px-6 mb-4 flex items-center justify-between">
+          <div className="px-4 mb-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Television className="w-5 h-5" style={{ color: '#F4F2F2' }} weight="fill" />
               <h2 className="text-white text-[20px]" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 900 }}>
@@ -1061,7 +1113,7 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
             </button>
           </div>
           
-          <div className={`flex gap-4 ${showAllTVShows ? 'flex-wrap px-6' : 'overflow-x-auto scrollbar-hide px-6 pb-2 scroll-smooth'}`}>
+          <div className={`flex gap-4 ${showAllTVShows ? 'flex-wrap px-4' : 'overflow-x-auto scrollbar-hide px-4 pb-2 scroll-smooth'}`}>
             {(showAllTVShows ? tvShows : tvShows.slice(0, 10)).map((show) => (
               <button
                 key={show.id}
@@ -1103,13 +1155,13 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
       {/* All Upcoming Section */}
       {!debouncedSearchQuery && (
         <div className="mb-8">
-          <div className="px-6 mb-4">
+          <div className="px-4 mb-4">
             <h2 className="text-white text-[20px]" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 900 }}>
               Todos os Próximos Lançamentos
             </h2>
           </div>
           
-          <div className="px-6 space-y-3 pb-6">
+          <div className="px-4 space-y-3 pb-6">
             {filteredUpcomingMovies.slice(0, 15).map((movie) => (
               <button
                 key={movie.id}

@@ -394,7 +394,7 @@ export function MovieViewer({ movie, genres, onClose, onActorClick, isFavorite, 
               <p className="font-['Montserrat:SemiBold',sans-serif] text-white text-[16px] mb-3">
                 Sinopse:
               </p>
-              <p className="font-['Montserrat:Light',sans-serif] text-white/90 text-[14px] leading-relaxed" style={{ paddingBottom: '24px' }}>
+              <p className="text-white/90 text-[14px] leading-relaxed" style={{ paddingBottom: '24px', fontFamily: 'SF Pro Display', fontWeight: 400 }}>
                 {movie.overview || 'Sinopse não disponível.'}
               </p>
             </div>
