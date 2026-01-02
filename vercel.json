@@ -3,12 +3,6 @@
   "buildCommand": "npm run build",
   "outputDirectory": "build",
   "framework": "vite",
-  "installCommand": "npm install",
-  "rewrites": [
-    {
-      "source": "/((?!.*\\.(png|jpg|jpeg|gif|svg|ico|webp|woff|woff2|ttf|eot)).*)",
-      "destination": "/index.html"
-    }
-  ]
+  "installCommand": "npm install"
 }
 
