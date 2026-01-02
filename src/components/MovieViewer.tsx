@@ -194,60 +194,26 @@ export function MovieViewer({ movie, genres, onClose, onActorClick, isFavorite, 
 
   return (
     <div className="relative h-full w-full flex flex-col bg-black" style={{ pointerEvents: 'auto', top: 0, left: 0, right: 0, bottom: 0 }}>
-      {/* Blurred poster background layer - Behind main poster - Limited to poster section */}
-      {movie.poster_path && (
-        <div 
-          className="absolute -z-20 transition-all duration-700"
-          style={{
-            backgroundImage: `url(${imageBaseUrl}${movie.poster_path})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            filter: 'blur(80px) brightness(0.15)',
-            transform: 'scale(1.3)',
-            top: `calc(-1 * env(safe-area-inset-top, 0px))`,
-            left: 0,
-            right: 0,
-            height: 'calc(100vw * 9 / 16 + env(safe-area-inset-top, 0px))',
-            paddingTop: 'env(safe-area-inset-top, 0px)',
-          }}
-        />
-      )}
-
-      {/* Subtle dark overlay - Apple TV style - Limited to poster section */}
-      <div 
-        className="absolute -z-10 transition-all duration-700"
-        style={{
-          background: 'radial-gradient(circle at center, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0.6) 70%, rgba(0, 0, 0, 0.9) 100%)',
-          top: `calc(-1 * env(safe-area-inset-top, 0px))`,
-          left: 0,
-          right: 0,
-          height: 'calc(100vw * 9 / 16 + env(safe-area-inset-top, 0px))',
+      {/* Poster Section - Full bleed até status bar - FORA do scroll */}
+      <section 
+        className="relative w-full overflow-hidden"
+        style={{ 
+          height: '100svh',
+          paddingTop: 'env(safe-area-inset-top, 0px)',
         }}
-      />
-
-      {/* Main Content - Scrollable */}
-      <div className="flex-1 overflow-y-auto scrollbar-hide bg-black" style={{ paddingBottom: '80px', pointerEvents: 'auto', backgroundColor: '#000000' }}>
-        {/* Poster Section - Full bleed até status bar */}
-        <div 
-          className="relative w-full bg-black" 
-          style={{ 
-            marginTop: `calc(-1 * env(safe-area-inset-top, 0px))`,
-            paddingTop: 'env(safe-area-inset-top, 0px)',
-            backgroundColor: '#000000',
-          }}
-        >
-          {/* Poster Image - Full height, no blur, extends to status bar */}
+      >
+          {/* Poster Image - Full height, extends to status bar */}
           <div 
-            className="relative w-full aspect-[9/16]"
+            className="absolute inset-0 w-full h-full"
           >
             {movie.poster_path ? (
               <ImageWithFallback
                 src={`${imageBaseUrl}${movie.poster_path}`}
                 alt={movie.title}
-                className="w-full h-full object-cover"
+                className="absolute inset-0 w-full h-full object-cover"
               />
             ) : (
-              <div className="w-full h-full bg-[#d9d9d9] flex items-center justify-center text-white/50">
+              <div className="absolute inset-0 w-full h-full bg-[#d9d9d9] flex items-center justify-center text-white/50">
                 Sem imagem
               </div>
             )}
@@ -294,10 +260,10 @@ export function MovieViewer({ movie, genres, onClose, onActorClick, isFavorite, 
             )}
           </div>
 
-          {/* Content overlay on poster - starts only in the last 30% (from 70%) */}
-          <div className="absolute left-0 right-0 px-6 z-20" style={{ top: '549px', bottom: 0, paddingBottom: '20px', left: '-9px' }}>
+          {/* Content overlay on poster - positioned at bottom */}
+          <div className="absolute left-0 right-0 px-6 z-20" style={{ bottom: '24px' }}>
             {/* Movie Title */}
-            <h1 className="text-white mb-3 leading-tight text-center drop-shadow-lg" style={{ fontFamily: 'SF Pro Display', fontWeight: 700, fontSize: '30px' }}>
+            <h1 className="text-white mb-3 leading-tight text-center drop-shadow-lg" style={{ fontFamily: '-apple-system, "SF Pro Display", "SF Pro Text", system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', fontWeight: 700, fontSize: '30px' }}>
               {movie.title}
             </h1>
 
@@ -384,17 +350,22 @@ export function MovieViewer({ movie, genres, onClose, onActorClick, isFavorite, 
               </div>
             )}
           </div>
-        </div>
+        </section>
 
-        {/* Additional Information - Below the poster, starts exactly where poster ends */}
-        <div className="w-full bg-black relative" style={{ backgroundColor: '#000000', zIndex: 10, marginTop: '180px', paddingTop: '24px' }}>
+      {/* Shadow transition - between poster and scrollable content */}
+      <div className="h-12 bg-gradient-to-b from-transparent to-black" />
+
+      {/* Main Content - Scrollable - Agora separado do poster */}
+      <div className="flex-1 overflow-y-auto scrollbar-hide bg-black" style={{ paddingBottom: 'env(safe-area-inset-bottom, 80px)', pointerEvents: 'auto', backgroundColor: '#000000' }}>
+        {/* Additional Information - Below the poster */}
+        <div className="w-full bg-black relative" style={{ backgroundColor: '#000000', zIndex: 10, paddingTop: '24px' }}>
           <div className="w-full max-w-full px-6 pb-6 flex flex-col" style={{ gap: '24px' }}>
             {/* Synopsis */}
             <div className="w-full">
               <p className="font-['Montserrat:SemiBold',sans-serif] text-white text-[16px] mb-3">
                 Sinopse:
               </p>
-              <p className="text-white/90 text-[14px] leading-relaxed" style={{ paddingBottom: '24px', fontFamily: 'SF Pro Display', fontWeight: 400 }}>
+              <p className="text-white/90 text-[14px] leading-relaxed" style={{ paddingBottom: '24px', fontFamily: '-apple-system, "SF Pro Display", "SF Pro Text", system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', fontWeight: 400 }}>
                 {movie.overview || 'Sinopse não disponível.'}
               </p>
             </div>
