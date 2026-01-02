@@ -204,10 +204,11 @@ export function MovieViewer({ movie, genres, onClose, onActorClick, isFavorite, 
             backgroundPosition: 'center',
             filter: 'blur(80px) brightness(0.15)',
             transform: 'scale(1.3)',
-            top: 0,
+            top: `calc(-1 * env(safe-area-inset-top, 0px))`,
             left: 0,
             right: 0,
-            height: 'calc(100vw * 9 / 16)',
+            height: 'calc(100vw * 9 / 16 + env(safe-area-inset-top, 0px))',
+            paddingTop: 'env(safe-area-inset-top, 0px)',
           }}
         />
       )}
@@ -217,57 +218,58 @@ export function MovieViewer({ movie, genres, onClose, onActorClick, isFavorite, 
         className="absolute -z-10 transition-all duration-700"
         style={{
           background: 'radial-gradient(circle at center, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0.6) 70%, rgba(0, 0, 0, 0.9) 100%)',
-          top: 0,
+          top: `calc(-1 * env(safe-area-inset-top, 0px))`,
           left: 0,
           right: 0,
-          height: 'calc(100vw * 9 / 16)',
+          height: 'calc(100vw * 9 / 16 + env(safe-area-inset-top, 0px))',
         }}
       />
 
       {/* Main Content - Scrollable */}
       <div className="flex-1 overflow-y-auto scrollbar-hide bg-black" style={{ paddingBottom: '80px', pointerEvents: 'auto', backgroundColor: '#000000' }}>
-        {/* Poster Section - Full bleed até status bar (padrão Apple TV/Music)
-            ✅ Poster vai até o topo (ignora safe area)
-            ✅ Conteúdo respeita safe area com paddingTop */}
-        <div className="relative w-full aspect-[9/16]">
-          {/* Poster Image - Vai até o topo, ignora safe area */}
-          {movie.poster_path ? (
-            <ImageWithFallback
-              src={`${imageBaseUrl}${movie.poster_path}`}
-              alt={movie.title}
-              className="absolute inset-0 w-full h-full object-cover"
-            />
-          ) : (
-            <div className="absolute inset-0 w-full h-full bg-[#d9d9d9] flex items-center justify-center text-white/50">
-              Sem imagem
-            </div>
-          )}
-          
-          {/* Fade at top - ensures status bar contrast */}
+        {/* Poster Section - Full bleed até status bar */}
+        <div 
+          className="relative w-full" 
+          style={{ 
+            marginTop: `calc(-1 * env(safe-area-inset-top, 0px))`,
+            paddingTop: 'env(safe-area-inset-top, 0px)',
+          }}
+        >
+          {/* Poster Image - Full height, no blur, extends to status bar */}
           <div 
-            className="absolute top-0 left-0 right-0 pointer-events-none z-[5]"
-            style={{
-              height: '20%',
-              background: 'linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0) 100%)',
-            }}
-          />
-          
-          {/* Fade at bottom - starts only in the last 30% (from 70%) */}
-          <div 
-            className="absolute bottom-0 left-0 right-0 pointer-events-none z-[5]"
-            style={{
-              height: '30%',
-              background: 'linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0.85) 25%, rgba(0,0,0,0.6) 50%, rgba(0,0,0,0.3) 75%, rgba(0,0,0,0) 100%)',
-            }}
-          />
-
-          {/* Content overlay - Respeita safe area (padrão Apple TV/Music) */}
-          <div
-            className="absolute inset-0"
-            style={{
-              paddingTop: 'env(safe-area-inset-top, 0px)',
-            }}
+            className="relative w-full aspect-[9/16]"
           >
+            {movie.poster_path ? (
+              <ImageWithFallback
+                src={`${imageBaseUrl}${movie.poster_path}`}
+                alt={movie.title}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-[#d9d9d9] flex items-center justify-center text-white/50">
+                Sem imagem
+              </div>
+            )}
+            
+            {/* Fade at top - ensures status bar contrast */}
+            <div 
+              className="absolute top-0 left-0 right-0 pointer-events-none z-[5]"
+              style={{
+                height: '20%',
+                background: 'linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0) 100%)',
+                paddingTop: 'env(safe-area-inset-top, 0px)',
+              }}
+            />
+            
+            {/* Fade at bottom - starts only in the last 30% (from 70%) */}
+            <div 
+              className="absolute bottom-0 left-0 right-0 pointer-events-none z-[5]"
+              style={{
+                height: '30%',
+                background: 'linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0.85) 25%, rgba(0,0,0,0.6) 50%, rgba(0,0,0,0.3) 75%, rgba(0,0,0,0) 100%)',
+              }}
+            />
+
             {/* Top bar - Back button (fixed) and IMDb rating (absolute) */}
             {/* Fixed back button */}
             <div className="fixed left-0 p-4 z-[999]" style={{ top: 'env(safe-area-inset-top, 16px)' }}>
@@ -289,9 +291,10 @@ export function MovieViewer({ movie, genres, onClose, onActorClick, isFavorite, 
                 </div>
               </div>
             )}
+          </div>
 
-            {/* Content overlay on poster - starts only in the last 30% (from 70%) */}
-            <div className="absolute left-0 right-0 px-6 z-20" style={{ top: '549px', bottom: 0, paddingBottom: '20px', left: '-9px' }}>
+          {/* Content overlay on poster - starts only in the last 30% (from 70%) */}
+          <div className="absolute left-0 right-0 px-6 z-20" style={{ top: '549px', bottom: 0, paddingBottom: '20px', left: '-9px' }}>
             {/* Movie Title */}
             <h1 className="text-white mb-3 leading-tight text-center drop-shadow-lg" style={{ fontFamily: 'SF Pro Display', fontWeight: 700, fontSize: '30px' }}>
               {movie.title}
@@ -379,7 +382,6 @@ export function MovieViewer({ movie, genres, onClose, onActorClick, isFavorite, 
                 </p>
               </div>
             )}
-            </div>
           </div>
         </div>
 
