@@ -3,6 +3,12 @@
   "buildCommand": "npm run build",
   "outputDirectory": "build",
   "framework": "vite",
-  "installCommand": "npm install"
+  "installCommand": "npm install",
+  "routes": [
+    {
+      "src": "/apple-touch-icon.png",
+      "dest": "/apple-touch-icon.png"
+    }
+  ]
 }
 
