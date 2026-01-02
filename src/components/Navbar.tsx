@@ -1,8 +1,8 @@
-import { Home, Newspaper, Compass, Heart, Shuffle } from 'lucide-react';
+import { Home, Newspaper, Heart, Shuffle } from 'lucide-react';
 
 interface NavbarProps {
-  currentView: 'home' | 'swiper' | 'news' | 'favorites' | 'newsDetail' | 'random';
-  onNavigate: (view: 'home' | 'swiper' | 'news' | 'favorites' | 'newsDetail' | 'random') => void;
+  currentView: 'home' | 'news' | 'favorites' | 'newsDetail' | 'random';
+  onNavigate: (view: 'home' | 'news' | 'favorites' | 'newsDetail' | 'random') => void;
   hasActiveFilters: boolean;
   favoritesCount: number;
 }
@@ -10,14 +10,13 @@ interface NavbarProps {
 export function Navbar({ currentView, onNavigate, hasActiveFilters, favoritesCount }: NavbarProps) {
   const navItems = [
     { id: 'home' as const, icon: Home, label: 'Explore' },
-    { id: 'swiper' as const, icon: Compass, label: 'Descobrir' },
     { id: 'random' as const, icon: Shuffle, label: 'Aleatório' },
     { id: 'favorites' as const, icon: Heart, label: 'Favoritos' },
     { id: 'news' as const, icon: Newspaper, label: 'Notícias' },
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-black/40 backdrop-blur-xl border-t border-white/10 px-2 py-3 flex items-center justify-around z-50 safe-area-inset-bottom" style={{ paddingBottom: 'calc(12px + env(safe-area-inset-bottom))' }}>
+    <nav className="fixed bottom-0 left-0 right-0 bg-black/40 backdrop-blur-xl border-t border-white/10 px-2 py-3 flex items-center justify-around z-[9999] safe-area-inset-bottom" style={{ paddingBottom: 'calc(12px + env(safe-area-inset-bottom))', pointerEvents: 'auto' }}>
       {navItems.map((item) => {
         const Icon = item.icon;
         const isActive = currentView === item.id;
@@ -34,8 +33,10 @@ export function Navbar({ currentView, onNavigate, hasActiveFilters, favoritesCou
           >
             <div className="relative">
               <Icon 
-                className={isActive ? 'w-7 h-7 stroke-[2.5]' : 'w-6 h-6 stroke-2'} 
-                style={isActive ? { color: '#04FFA7' } : undefined}
+                className={isActive ? 'w-7 h-7 text-white fill-white' : 'w-6 h-6 text-white/60'} 
+                strokeWidth={isActive ? 1.5 : 0.5}
+                fill={isActive ? 'currentColor' : 'none'}
+                style={isActive ? { color: 'white' } : { color: 'rgba(255, 255, 255, 0.6)' }}
               />
               {item.id === 'favorites' && favoritesCount > 0 && (
                 <div className="absolute -top-1 -right-1 w-2 h-2 bg-white rounded-full" />
@@ -43,7 +44,7 @@ export function Navbar({ currentView, onNavigate, hasActiveFilters, favoritesCou
             </div>
             <span 
               className={`text-[10px] leading-tight`}
-              style={isActive ? { color: '#04FFA7', fontFamily: 'Montserrat, sans-serif', fontWeight: 600 } : { fontFamily: 'Montserrat, sans-serif', fontWeight: 400 }}
+              style={isActive ? { color: 'white', fontFamily: 'Montserrat, sans-serif', fontWeight: 600 } : { color: 'rgba(255, 255, 255, 0.6)', fontFamily: 'Montserrat, sans-serif', fontWeight: 400 }}
             >
               {item.label}
             </span>

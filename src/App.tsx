@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Home } from './components/Home';
-import { MovieSwiper } from './components/MovieSwiper';
+import { MovieViewer } from './components/MovieViewer';
 import { CinemaNews, NewsArticle } from './components/CinemaNews';
 import { NewsDetail } from './components/NewsDetail';
 import { FilterPanel } from './components/FilterPanel';
@@ -33,10 +33,15 @@ interface Movie {
   id: number;
   title: string;
   poster_path: string | null;
+  backdrop_path?: string | null;
   release_date: string;
   overview: string;
   genre_ids: number[];
   trailer_key?: string;
+  vote_average?: number;
+  imdb_id?: string;
+  certification?: string;
+  origin_country?: string;
   watch_providers?: {
     logo_path: string;
     provider_name: string;
@@ -54,11 +59,16 @@ interface TVShow {
   id: number;
   name: string;
   poster_path: string | null;
+  backdrop_path?: string | null;
   first_air_date: string;
   last_air_date?: string;
   overview: string;
   genre_ids: number[];
   trailer_key?: string;
+  vote_average?: number;
+  imdb_id?: string;
+  certification?: string;
+  origin_country?: string;
   watch_providers?: {
     logo_path: string;
     provider_name: string;
@@ -94,12 +104,15 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [genres, setGenres] = useState<{ [key: number]: string }>({});
   const [currentMovieIndex, setCurrentMovieIndex] = useState(0);
-  const [currentView, setCurrentView] = useState<'home' | 'swiper' | 'news' | 'favorites' | 'newsDetail' | 'random'>('home');
+  const [currentView, setCurrentView] = useState<'home' | 'news' | 'favorites' | 'newsDetail' | 'random'>('home');
   const [selectedNewsArticle, setSelectedNewsArticle] = useState<NewsArticle | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [currentMovieList, setCurrentMovieList] = useState<Movie[]>([]);
   const [selectedActor, setSelectedActor] = useState<{ id: number; name: string; profile_path: string | null } | null>(null);
   const [selectedTVShow, setSelectedTVShow] = useState<TVShow | null>(null);
+  const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
+  const [loadingMovie, setLoadingMovie] = useState(false);
+  const [loadingTVShow, setLoadingTVShow] = useState(false);
 
   // Check if API key is configured
   const isApiKeyConfigured = TMDB_API_KEY && TMDB_API_KEY !== 'YOUR_TMDB_API_KEY_HERE';
@@ -589,18 +602,145 @@ export default function App() {
     setSelectedGenres([]);
   };
 
-  const handleMovieClick = (index: number) => {
-    setCurrentMovieIndex(index);
-    setCurrentView('swiper');
-  };
 
-  const handleHomeMovieClick = (movie: Movie, movieList: Movie[]) => {
-    setCurrentMovieList(movieList);
-    const index = movieList.findIndex(m => m.id === movie.id);
-    setCurrentMovieIndex(index >= 0 ? index : 0);
-    setCurrentView('swiper');
+  const handleHomeMovieClick = async (movie: Movie, movieList: Movie[]) => {
+    setLoadingMovie(true);
     setSelectedActor(null); // Clear actor view when clicking a movie
     setSelectedTVShow(null); // Clear TV show view when clicking a movie
+    
+    try {
+      // Fetch complete movie details
+      const [creditsResponse, videosResponse, providersResponse, detailsResponse, externalIdsResponse, releaseDatesResponse] = await Promise.all([
+        fetch(`https://api.themoviedb.org/3/movie/${movie.id}/credits?api_key=${TMDB_API_KEY}`),
+        fetch(`https://api.themoviedb.org/3/movie/${movie.id}/videos?api_key=${TMDB_API_KEY}&language=pt-BR`),
+        fetch(`https://api.themoviedb.org/3/movie/${movie.id}/watch/providers?api_key=${TMDB_API_KEY}`),
+        fetch(`https://api.themoviedb.org/3/movie/${movie.id}?api_key=${TMDB_API_KEY}&language=pt-BR`),
+        fetch(`https://api.themoviedb.org/3/movie/${movie.id}/external_ids?api_key=${TMDB_API_KEY}`),
+        fetch(`https://api.themoviedb.org/3/movie/${movie.id}/release_dates?api_key=${TMDB_API_KEY}`)
+      ]);
+      
+      const creditsData = await creditsResponse.json();
+      const videosData = await videosResponse.json();
+      const providersData = await providersResponse.json();
+      const detailsData = await detailsResponse.json();
+      const externalIdsData = await externalIdsResponse.json();
+      const releaseDatesData = await releaseDatesResponse.json();
+      
+      // Find official trailer
+      const trailer = videosData.results?.find(
+        (video: any) => video.type === 'Trailer' && video.site === 'YouTube'
+      );
+      
+      // Get Brazil providers (flatrate = streaming)
+      const brProviders = providersData.results?.BR?.flatrate || [];
+      const watchProviders = brProviders.slice(0, 3).map((provider: any) => ({
+        logo_path: provider.logo_path,
+        provider_name: provider.provider_name
+      }));
+      
+      // Get certification from release dates (Brazil or US)
+      const brRelease = releaseDatesData.results?.find((r: any) => r.iso_3166_1 === 'BR');
+      const usRelease = releaseDatesData.results?.find((r: any) => r.iso_3166_1 === 'US');
+      const certification = brRelease?.release_dates?.[0]?.certification || 
+                           usRelease?.release_dates?.[0]?.certification || 
+                           null;
+      
+      // Get origin country (first production country)
+      const originCountry = detailsData.production_countries?.[0]?.iso_3166_1 || null;
+      
+      // Create complete movie object
+      const completeMovie: Movie = {
+        ...movie,
+        backdrop_path: detailsData.backdrop_path || movie.backdrop_path,
+        trailer_key: trailer?.key,
+        vote_average: detailsData.vote_average,
+        imdb_id: externalIdsData.imdb_id,
+        certification: certification,
+        origin_country: originCountry,
+        watch_providers: watchProviders.length > 0 ? watchProviders : undefined,
+        credits: {
+          cast: creditsData.cast.slice(0, 4)
+        }
+      };
+      
+      setSelectedMovie(completeMovie);
+    } catch (error) {
+      console.error('Error fetching movie details:', error);
+      // If fetch fails, use basic movie data
+      setSelectedMovie(movie);
+    } finally {
+      setLoadingMovie(false);
+    }
+  };
+
+  const handleTVShowClick = async (show: TVShow) => {
+    setLoadingTVShow(true);
+    setSelectedActor(null); // Clear actor view when clicking a TV show
+    setSelectedMovie(null); // Clear movie view when clicking a TV show
+    
+    try {
+      // Fetch complete TV show details
+      const [creditsResponse, videosResponse, providersResponse, detailsResponse, externalIdsResponse, contentRatingsResponse] = await Promise.all([
+        fetch(`https://api.themoviedb.org/3/tv/${show.id}/credits?api_key=${TMDB_API_KEY}`),
+        fetch(`https://api.themoviedb.org/3/tv/${show.id}/videos?api_key=${TMDB_API_KEY}&language=pt-BR`),
+        fetch(`https://api.themoviedb.org/3/tv/${show.id}/watch/providers?api_key=${TMDB_API_KEY}`),
+        fetch(`https://api.themoviedb.org/3/tv/${show.id}?api_key=${TMDB_API_KEY}&language=pt-BR`),
+        fetch(`https://api.themoviedb.org/3/tv/${show.id}/external_ids?api_key=${TMDB_API_KEY}`),
+        fetch(`https://api.themoviedb.org/3/tv/${show.id}/content_ratings?api_key=${TMDB_API_KEY}`)
+      ]);
+      
+      const creditsData = await creditsResponse.json();
+      const videosData = await videosResponse.json();
+      const providersData = await providersResponse.json();
+      const detailsData = await detailsResponse.json();
+      const externalIdsData = await externalIdsResponse.json();
+      const contentRatingsData = await contentRatingsResponse.json();
+      
+      // Find official trailer
+      const trailer = videosData.results?.find(
+        (video: any) => video.type === 'Trailer' && video.site === 'YouTube'
+      );
+      
+      // Get Brazil providers (flatrate = streaming)
+      const brProviders = providersData.results?.BR?.flatrate || [];
+      const watchProviders = brProviders.slice(0, 3).map((provider: any) => ({
+        logo_path: provider.logo_path,
+        provider_name: provider.provider_name
+      }));
+      
+      // Get certification from content ratings (Brazil or US)
+      const brRating = contentRatingsData.results?.find((r: any) => r.iso_3166_1 === 'BR');
+      const usRating = contentRatingsData.results?.find((r: any) => r.iso_3166_1 === 'US');
+      const certification = brRating?.rating || usRating?.rating || null;
+      
+      // Get origin country (first country from origin_country array)
+      const originCountry = detailsData.origin_country?.[0] || null;
+      
+      // Create complete TV show object
+      const completeShow: TVShow = {
+        ...show,
+        backdrop_path: detailsData.backdrop_path || show.backdrop_path,
+        trailer_key: trailer?.key,
+        vote_average: detailsData.vote_average,
+        imdb_id: externalIdsData.imdb_id,
+        certification: certification,
+        origin_country: originCountry,
+        watch_providers: watchProviders.length > 0 ? watchProviders : undefined,
+        number_of_seasons: detailsData.number_of_seasons,
+        last_episode_to_air: detailsData.last_episode_to_air,
+        credits: {
+          cast: creditsData.cast.slice(0, 4)
+        }
+      };
+      
+      setSelectedTVShow(completeShow);
+    } catch (error) {
+      console.error('Error fetching TV show details:', error);
+      // If fetch fails, use basic TV show data
+      setSelectedTVShow(show);
+    } finally {
+      setLoadingTVShow(false);
+    }
   };
 
   const handleNavigateHome = () => {
@@ -608,9 +748,10 @@ export default function App() {
     setCurrentMovieIndex(0);
   };
 
-  const handleNavigation = (view: 'home' | 'swiper' | 'news' | 'favorites' | 'newsDetail' | 'random') => {
+  const handleNavigation = (view: 'home' | 'news' | 'favorites' | 'newsDetail' | 'random') => {
     setCurrentView(view);
     setCurrentMovieIndex(0);
+    setSelectedMovie(null); // Clear movie view when navigating
     setSelectedTVShow(null); // Clear TV show view when navigating
     setSelectedActor(null); // Also clear actor view
     if (view !== 'home') {
@@ -692,28 +833,61 @@ export default function App() {
     );
   }
 
-  // Show TV Show Viewer view
+  // Show Movie Viewer view (full-bleed hero poster)
+  if (selectedMovie) {
+    return (
+      <div className="fixed inset-0 bg-black z-50 overflow-hidden" style={{ paddingTop: 0, marginTop: 0, top: 0 }}>
+        {loadingMovie ? (
+          <div className="flex items-center justify-center h-full">
+            <Loader2 className="w-12 h-12 text-white animate-spin" />
+          </div>
+        ) : (
+          <MovieViewer
+            movie={selectedMovie}
+            genres={genres}
+            onClose={() => setSelectedMovie(null)}
+            onActorClick={(actor) => {
+              setSelectedMovie(null);
+              setSelectedActor(actor);
+            }}
+            isFavorite={favorites.includes(selectedMovie.id)}
+            onToggleFavorite={toggleFavorite}
+            favoritesCount={favorites.length + tvFavorites.length}
+            onNavigate={handleNavigation}
+            currentView={currentView}
+            hasActiveFilters={hasActiveFilters}
+            apiKey={TMDB_API_KEY}
+          />
+        )}
+      </div>
+    );
+  }
+
+  // Show TV Show Viewer view (full-bleed hero poster)
   if (selectedTVShow) {
     return (
-      <div className="bg-gradient-to-br from-[#0a0a0f] via-[#1a0f2e] to-[#2d1b3d] min-h-screen flex flex-col">
-        <TVShowViewer
-          show={selectedTVShow}
-          genres={genres}
-          onClose={() => setSelectedTVShow(null)}
-          onActorClick={(actor) => {
-            setSelectedTVShow(null);
-            setSelectedActor(actor);
-          }}
-          isFavorite={tvFavorites.includes(selectedTVShow.id)}
-          onToggleFavorite={toggleTVFavorite}
-        />
-        <Navbar 
-          currentView={currentView}
-          onNavigate={handleNavigation}
-          hasActiveFilters={hasActiveFilters}
-          favoritesCount={favorites.length + tvFavorites.length}
-        />
-        <InstallPrompt />
+      <div className="fixed inset-0 bg-black z-50 overflow-hidden" style={{ paddingTop: 0, marginTop: 0, top: 0 }}>
+        {loadingTVShow ? (
+          <div className="flex items-center justify-center h-full">
+            <Loader2 className="w-12 h-12 text-white animate-spin" />
+          </div>
+        ) : (
+          <TVShowViewer
+            show={selectedTVShow}
+            genres={genres}
+            onClose={() => setSelectedTVShow(null)}
+            onActorClick={(actor) => {
+              setSelectedTVShow(null);
+              setSelectedActor(actor);
+            }}
+            isFavorite={tvFavorites.includes(selectedTVShow.id)}
+            onToggleFavorite={toggleTVFavorite}
+            favoritesCount={favorites.length + tvFavorites.length}
+            onNavigate={handleNavigation}
+            currentView={currentView}
+            hasActiveFilters={hasActiveFilters}
+          />
+        )}
       </div>
     );
   }
@@ -770,10 +944,14 @@ export default function App() {
           nostalgicMovies={nostalgicMovies}
           tvShows={tvShows}
           onMovieClick={handleHomeMovieClick}
-          onTVShowClick={setSelectedTVShow}
+          onTVShowClick={handleTVShowClick}
           onActorClick={setSelectedActor}
           apiKey={TMDB_API_KEY}
           genres={genres}
+          selectedGenres={selectedGenres}
+          selectedMonth={selectedMonth}
+          onGenreToggle={handleGenreToggle}
+          onFilterClick={() => setShowFilters(true)}
         />
         <Navbar 
           currentView={currentView}
@@ -782,6 +960,20 @@ export default function App() {
           favoritesCount={favorites.length + tvFavorites.length}
         />
         <InstallPrompt />
+        
+        {/* Filter Panel */}
+        {showFilters && (
+          <FilterPanel
+            selectedMonth={selectedMonth}
+            selectedGenres={selectedGenres}
+            genres={genres}
+            onMonthChange={setSelectedMonth}
+            onGenreToggle={handleGenreToggle}
+            onClose={() => setShowFilters(false)}
+            onApply={handleApplyFilters}
+            onClear={handleClearFilters}
+          />
+        )}
       </>
     );
   }
@@ -823,20 +1015,34 @@ export default function App() {
           image={seoImage}
         />
         <div className="bg-gradient-to-br from-[#0a0a0f] via-[#1a0f2e] to-[#2d1b3d] min-h-screen flex flex-col">
-        <CinemaNews 
-          onArticleClick={(article) => {
-            setSelectedNewsArticle(article);
-            setCurrentView('newsDetail');
-          }}
-        />
-        <Navbar 
-          currentView={currentView}
-          onNavigate={handleNavigation}
-          hasActiveFilters={hasActiveFilters}
-          favoritesCount={favorites.length + tvFavorites.length}
-        />
-        <InstallPrompt />
+          <CinemaNews 
+            onArticleClick={(article) => {
+              setSelectedNewsArticle(article);
+              setCurrentView('newsDetail');
+            }}
+          />
+          <Navbar 
+            currentView={currentView}
+            onNavigate={handleNavigation}
+            hasActiveFilters={hasActiveFilters}
+            favoritesCount={favorites.length + tvFavorites.length}
+          />
+          <InstallPrompt />
         </div>
+        
+        {/* Filter Panel */}
+        {showFilters && (
+          <FilterPanel
+            selectedMonth={selectedMonth}
+            selectedGenres={selectedGenres}
+            genres={genres}
+            onMonthChange={setSelectedMonth}
+            onGenreToggle={handleGenreToggle}
+            onClose={() => setShowFilters(false)}
+            onApply={handleApplyFilters}
+            onClear={handleClearFilters}
+          />
+        )}
       </>
     );
   }
@@ -889,7 +1095,7 @@ export default function App() {
         <div className="w-10"></div>
         
         <h1 className="text-[28px] text-white" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 900 }}>
-          {currentView === 'swiper' ? 'Descobrir' : 'Próximos Lançamentos'}
+          Próximos Lançamentos
         </h1>
         
         <button
@@ -905,19 +1111,6 @@ export default function App() {
 
       {/* Main Content */}
       <div className="flex-1 overflow-hidden pb-[72px]">
-        {currentView === 'swiper' && (
-          <MovieSwiper
-            movies={currentMovieList.length > 0 ? currentMovieList : filteredMovies}
-            genres={genres}
-            currentIndex={currentMovieIndex}
-            onIndexChange={setCurrentMovieIndex}
-            onActorClick={setSelectedActor}
-            favorites={favorites}
-            onToggleFavorite={toggleFavorite}
-            apiKey={TMDB_API_KEY}
-            onMovieClick={handleHomeMovieClick}
-          />
-        )}
       </div>
 
       {/* Navbar */}

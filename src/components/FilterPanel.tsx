@@ -62,7 +62,7 @@ export function FilterPanel({
   const hasActiveFilters = tempMonth !== null || tempGenres.length > 0;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm">
       <div className="bg-gradient-to-b from-[#1a1a1a] to-[#0d0d0e] h-full overflow-y-auto flex flex-col">
         {/* Header */}
         <div className="sticky top-0 bg-[#1a1a1a] border-b border-white/10 px-4 py-4 flex items-center justify-between z-10">

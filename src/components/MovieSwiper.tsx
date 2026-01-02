@@ -104,19 +104,15 @@ export function MovieSwiper({ movies, genres, currentIndex, onIndexChange, onAct
         }}
       />
 
-      {/* Favorite button - Fixed position */}
-      <button
-        onClick={() => onToggleFavorite(currentMovie.id)}
-        className="absolute top-6 right-6 z-20 bg-white/20 backdrop-blur-md rounded-full p-3 shadow-lg hover:bg-white/30 transition-all active:scale-95"
-      >
-        <Heart
-          className={`w-6 h-6 transition-all duration-300 ${
-            favorites.includes(currentMovie.id) 
-              ? 'text-red-500 fill-red-500' 
-              : 'text-white'
-          }`}
-        />
-      </button>
+      {/* Favorite button - Only show if not already favorited (only allow adding) */}
+      {!favorites.includes(currentMovie.id) && (
+        <button
+          onClick={() => onToggleFavorite(currentMovie.id)}
+          className="absolute top-6 right-6 z-20 bg-white/20 backdrop-blur-md rounded-full p-3 shadow-lg hover:bg-white/30 transition-all active:scale-95"
+        >
+          <Heart className="w-6 h-6 text-white transition-all duration-300" />
+        </button>
+      )}
 
       {/* Poster Display */}
       <div className="flex-shrink-0 py-8 px-8 relative">

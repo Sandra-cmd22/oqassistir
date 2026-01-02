@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { ImageWithFallback } from './figma/ImageWithFallback';
-import { Search, Loader2 } from 'lucide-react';
+import { Search, Loader2, SlidersHorizontal } from 'lucide-react';
 import { FilmStrip, Calendar, House, Television } from 'phosphor-react';
 import { StreamingBadge } from './StreamingBadge';
 import { SkeletonSection } from './SkeletonCard';
@@ -72,9 +72,13 @@ interface HomeProps {
   onActorClick: (actor: { id: number; name: string; profile_path: string | null }) => void;
   apiKey: string;
   genres?: { [key: number]: string };
+  selectedGenres?: number[];
+  selectedMonth?: number | null;
+  onGenreToggle?: (genreId: number) => void;
+  onFilterClick?: () => void;
 }
 
-export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgicMovies, tvShows, onMovieClick, onTVShowClick, onActorClick, apiKey, genres = {} }: HomeProps) {
+export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgicMovies, tvShows, onMovieClick, onTVShowClick, onActorClick, apiKey, genres = {}, selectedGenres = [], selectedMonth = null, onGenreToggle, onFilterClick }: HomeProps) {
   const imageBaseUrl = 'https://image.tmdb.org/t/p/w300';
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Movie[]>([]);
@@ -120,40 +124,84 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
   );
 
   useEffect(() => {
-    if (searchQuery) {
+    // Check if there are active filters
+    const hasActiveFilters = selectedGenres.length > 0 || selectedMonth !== null;
+    
+    if (searchQuery || hasActiveFilters) {
       setIsSearching(true);
       
-      // Verificar se a busca corresponde a um gênero
-      const genreMatch = Object.entries(genres).find(([_, name]) => 
-        name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-        searchQuery.toLowerCase().includes(name.toLowerCase())
-      );
-      
-      // Buscar filmes
-      fetch(`https://api.themoviedb.org/3/search/movie?api_key=${apiKey}&query=${searchQuery}&language=pt-BR`)
-        .then(response => response.json())
-        .then(async (data) => {
-          const movies = data.results || [];
-          // Buscar imdb_id para cada filme
-          const moviesWithImdb = await Promise.all(
-            movies.slice(0, 20).map(async (movie: Movie) => {
-              try {
-                const detailsResponse = await fetch(
-                  `https://api.themoviedb.org/3/movie/${movie.id}?api_key=${apiKey}`
-                );
-                const details = await detailsResponse.json();
-                return { ...movie, imdb_id: details.imdb_id };
-              } catch {
-                return movie;
-              }
-            })
-          );
-          setSearchResults(moviesWithImdb);
-        })
-        .catch(error => {
-          console.error('Error fetching search results:', error);
-          setSearchResults([]);
+      // Build discover URL with filters
+      const buildDiscoverUrl = () => {
+        const params = new URLSearchParams({
+          api_key: apiKey,
+          language: 'pt-BR',
+          sort_by: 'popularity.desc',
+          page: '1'
         });
+
+        // Add query if provided
+        if (searchQuery) {
+          params.append('query', searchQuery);
+        }
+
+        // Add genre filters
+        if (selectedGenres.length > 0) {
+          params.append('with_genres', selectedGenres.join(','));
+        }
+
+        // Add month filter (convert to date range)
+        if (selectedMonth !== null) {
+          const currentYear = new Date().getFullYear();
+          const monthStart = `${currentYear}-${String(selectedMonth + 1).padStart(2, '0')}-01`;
+          const monthEnd = `${currentYear}-${String(selectedMonth + 1).padStart(2, '0')}-31`;
+          params.append('primary_release_date.gte', monthStart);
+          params.append('primary_release_date.lte', monthEnd);
+        }
+
+        return `https://api.themoviedb.org/3/discover/movie?${params.toString()}`;
+      };
+
+      // Use discover API if filters are active, otherwise use search API
+      const hasFilters = selectedGenres.length > 0 || selectedMonth !== null;
+      const searchUrl = hasFilters 
+        ? buildDiscoverUrl()
+        : searchQuery 
+          ? `https://api.themoviedb.org/3/search/movie?api_key=${apiKey}&query=${searchQuery}&language=pt-BR`
+          : null;
+      
+      // Buscar filmes (only if we have a URL or searchQuery)
+      if (searchUrl) {
+        fetch(searchUrl)
+          .then(response => response.json())
+          .then(async (data) => {
+            const movies = data.results || [];
+            // Buscar imdb_id para cada filme
+            const moviesWithImdb = await Promise.all(
+              movies.slice(0, 20).map(async (movie: Movie) => {
+                try {
+                  const detailsResponse = await fetch(
+                    `https://api.themoviedb.org/3/movie/${movie.id}?api_key=${apiKey}`
+                  );
+                  const details = await detailsResponse.json();
+                  return { ...movie, imdb_id: details.imdb_id };
+                } catch {
+                  return movie;
+                }
+              })
+            );
+            setSearchResults(moviesWithImdb);
+            setIsSearching(false);
+          })
+          .catch(error => {
+            console.error('Error fetching search results:', error);
+            setSearchResults([]);
+            setIsSearching(false);
+          });
+      } else if (!searchQuery) {
+        // If no search query and no filters, clear results
+        setSearchResults([]);
+        setIsSearching(false);
+      }
 
       // Buscar séries
       fetch(`https://api.themoviedb.org/3/search/tv?api_key=${apiKey}&query=${searchQuery}&language=pt-BR`)
@@ -250,9 +298,11 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
       setSearchCompanyResults([]);
       setSearchKeywordResults([]);
       setGenreSearchResults([]);
-      setIsSearching(false);
+      if (!searchQuery) {
+        setIsSearching(false);
+      }
     }
-  }, [searchQuery, apiKey, genres]);
+  }, [searchQuery, apiKey, genres, selectedGenres, selectedMonth]);
 
   // Featured movie para o header destacado
   const featuredMovie = !searchQuery && (popularMovies.length > 0 || upcomingMovies.length > 0)
@@ -277,77 +327,42 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
       {/* Header */}
       <div className="px-6 pt-8 pb-4">
         {/* Logo */}
-        <div className="mb-[15px]">
-          <div className="h-[36px] w-auto mb-3">
+        <div className="mb-4">
+          <div className="h-[36px] w-auto">
             <img 
               src={logoImage} 
               alt="OQ Assistir" 
               className="h-full w-auto object-contain"
             />
           </div>
-          
-          {/* Explore abaixo da logo */}
-          <h1 className="text-[28px] text-white" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 900 }}>
-            Explore
-          </h1>
-        </div>
-        
-        {/* Descrição com ícone de pipoca */}
-        <div className="flex items-center gap-2 mb-4">
-          <p className="font-['Montserrat:Light',sans-serif] text-white/70 text-[14px]">
-            Escolha o filme perfeito para hoje
-          </p>
-          <span className="text-[16px]">🍿</span>
         </div>
 
-        {/* Search Input Premium */}
-        <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/30 z-10 pointer-events-none" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Buscar filmes..."
-            className="w-full bg-white/5 backdrop-blur-xl border border-white/10 rounded-[16px] pl-12 pr-4 py-3 text-white placeholder:text-white/30 font-['Montserrat:Regular',sans-serif] text-[14px] focus:outline-none focus:border-white/20 focus:bg-white/8 transition-all"
-          />
-          {isSearching && (
-            <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40 animate-spin z-10" />
+        {/* Search Input with Filter Icon */}
+        <div className="flex items-center gap-2 mb-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/30 z-10 pointer-events-none" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Buscar filmes..."
+              className="w-full bg-white/5 backdrop-blur-xl border border-white/10 rounded-[16px] pl-12 pr-4 py-3 text-white placeholder:text-white/30 font-['Montserrat:Regular',sans-serif] text-[14px] focus:outline-none focus:border-white/20 focus:bg-white/8 transition-all"
+            />
+            {isSearching && (
+              <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40 animate-spin z-10" />
+            )}
+          </div>
+          {onFilterClick && (
+            <button
+              onClick={onFilterClick}
+              className="p-3 bg-white/5 backdrop-blur-xl border border-white/10 hover:bg-white/10 hover:border-white/20 rounded-[16px] transition-all flex-shrink-0"
+            >
+              <SlidersHorizontal className="w-5 h-5 text-white" />
+            </button>
           )}
         </div>
       </div>
 
-      {/* Featured Movie Header */}
-      {featuredMovie && featuredBackdropUrl && (
-        <div className="relative mx-6 mb-8 rounded-[20px] overflow-hidden h-[200px]">
-          {/* Background com blur */}
-          <div className="absolute inset-0">
-            <img 
-              src={featuredBackdropUrl}
-              alt={featuredMovie.title}
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-black/40 backdrop-blur-sm"></div>
-          </div>
-          
-          {/* Conteúdo */}
-          <div className="relative h-full flex flex-col justify-end p-6">
-            <h2 className="text-white text-[24px] mb-2 font-['Poppins',sans-serif] font-bold line-clamp-2">
-              {featuredMovie.title}
-            </h2>
-            {featuredMovie.release_date && (
-              <p className="text-white/80 text-[14px] mb-4 font-['Montserrat:Regular',sans-serif]">
-                {formatDateLong(featuredMovie.release_date)}
-              </p>
-            )}
-            <button
-              onClick={() => onMovieClick(featuredMovie, [featuredMovie])}
-              className="self-start bg-white/20 backdrop-blur-md border border-white/30 text-white px-6 py-3 rounded-[12px] font-['Montserrat:SemiBold',sans-serif] text-[14px] hover:bg-white/30 transition-all"
-            >
-              Ver detalhes
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Search Results */}
       {searchQuery && (
@@ -747,7 +762,7 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
               <FilmStrip className="w-5 h-5" style={{ color: '#F4F2F2' }} weight="fill" />
               <h2 className="text-white text-[20px]" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 900 }}>
                 Em Cartaz
-              </h2>
+            </h2>
             </div>
             <button 
               onClick={() => setShowAllNowPlaying(!showAllNowPlaying)}
@@ -795,8 +810,8 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
             <div className="flex items-center gap-2">
               <Calendar className="w-5 h-5" style={{ color: '#F4F2F2' }} weight="fill" />
               <h2 className="text-white text-[20px]" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 900 }}>
-                Lançamentos da Semana
-              </h2>
+              Lançamentos da Semana
+            </h2>
             </div>
             <button 
               onClick={() => setShowAllThisWeek(!showAllThisWeek)}
@@ -956,8 +971,8 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
             <div className="flex items-center gap-2">
               <Television className="w-5 h-5" style={{ color: '#F4F2F2' }} weight="fill" />
               <h2 className="text-white text-[20px]" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 900 }}>
-                Séries no Ar
-              </h2>
+              Séries no Ar
+            </h2>
             </div>
             <button 
               onClick={() => setShowAllTVShows(!showAllTVShows)}
