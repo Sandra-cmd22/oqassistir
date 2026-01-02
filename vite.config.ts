@@ -11,7 +11,7 @@
         registerType: 'autoUpdate',
         includeAssets: [
           'favicon.ico',
-          'logo.180.png',
+          'apple-touch-icon.png',
           'icons/logo.192.png',
           'icons/logo.512.png'
         ],
