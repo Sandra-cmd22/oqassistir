@@ -4,7 +4,7 @@ import { Search, Loader2, SlidersHorizontal } from 'lucide-react';
 import { FilmStrip, Calendar, House, Television } from 'phosphor-react';
 import { StreamingBadge } from './StreamingBadge';
 import { SkeletonSection } from './SkeletonCard';
-import logoImage from '../assets/logo.oficial.png';
+import logoImage from '../assets/logo.oficial.svg';
 
 interface Movie {
   id: number;
