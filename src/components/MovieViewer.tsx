@@ -193,10 +193,10 @@ export function MovieViewer({ movie, genres, onClose, onActorClick, isFavorite, 
   };
 
   return (
-    <div className="relative h-full w-full flex flex-col bg-black" style={{ pointerEvents: 'auto', top: 0, left: 0, right: 0, bottom: 0 }}>
+    <div className="relative w-full flex flex-col bg-black overflow-y-auto" style={{ height: '100vh', pointerEvents: 'auto', top: 0, left: 0, right: 0, bottom: 0 }}>
       {/* Poster Section - Full bleed até status bar - FORA do scroll */}
       <section 
-        className="relative w-full overflow-hidden"
+        className="relative w-full overflow-hidden flex-shrink-0"
         style={{ 
           height: '100svh',
           paddingTop: 'env(safe-area-inset-top, 0px)',
@@ -352,11 +352,8 @@ export function MovieViewer({ movie, genres, onClose, onActorClick, isFavorite, 
           </div>
         </section>
 
-      {/* Shadow transition - between poster and scrollable content */}
-      <div className="h-12 bg-gradient-to-b from-transparent to-black" />
-
       {/* Main Content - Scrollable - Agora separado do poster */}
-      <div className="flex-1 overflow-y-auto scrollbar-hide bg-black" style={{ paddingBottom: 'env(safe-area-inset-bottom, 80px)', pointerEvents: 'auto', backgroundColor: '#000000' }}>
+      <div className="flex-shrink-0 scrollbar-hide bg-black" style={{ paddingBottom: 'env(safe-area-inset-bottom, 80px)', pointerEvents: 'auto', backgroundColor: '#000000' }}>
         {/* Additional Information - Below the poster */}
         <div className="w-full bg-black relative" style={{ backgroundColor: '#000000', zIndex: 10, paddingTop: '24px' }}>
           <div className="w-full max-w-full px-6 pb-6 flex flex-col" style={{ gap: '24px' }}>
