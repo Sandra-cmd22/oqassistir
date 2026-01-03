@@ -16,7 +16,7 @@ export function Navbar({ currentView, onNavigate, hasActiveFilters, favoritesCou
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-black/40 backdrop-blur-xl border-t border-white/10 px-2 py-3 flex items-center justify-around safe-area-inset-bottom" style={{ paddingBottom: 'calc(12px + env(safe-area-inset-bottom))', pointerEvents: 'auto', position: 'fixed', zIndex: 999999 }}>
+    <nav className="fixed bottom-0 left-0 right-0 bg-black/40 backdrop-blur-xl border-t border-white/10 px-2 py-2 flex items-center justify-around safe-area-inset-bottom" style={{ paddingBottom: 'calc(4px + env(safe-area-inset-bottom))', pointerEvents: 'auto', position: 'fixed', zIndex: 999999 }}>
       {navItems.map((item) => {
         const Icon = item.icon;
         const isActive = currentView === item.id;

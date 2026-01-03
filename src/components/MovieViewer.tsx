@@ -356,7 +356,7 @@ export function MovieViewer({ movie, genres, onClose, onActorClick, isFavorite, 
         </section>
 
       {/* Main Content - Scrollable - Agora separado do poster */}
-      <div className="flex-shrink-0 scrollbar-hide bg-black" style={{ paddingBottom: 'env(safe-area-inset-bottom, 80px)', pointerEvents: 'auto', backgroundColor: '#000000' }}>
+      <div className="flex-shrink-0 scrollbar-hide bg-black" style={{ paddingBottom: 'env(safe-area-inset-bottom, 60px)', pointerEvents: 'auto', backgroundColor: '#000000' }}>
         {/* Additional Information - Below the poster */}
         <div className="w-full bg-black relative" style={{ backgroundColor: '#000000', zIndex: 10, paddingTop: '24px' }}>
           <div className="w-full max-w-full px-6 pb-6 flex flex-col" style={{ gap: '24px' }}>

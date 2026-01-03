@@ -9,6 +9,11 @@
       react(),
       VitePWA({
         registerType: 'autoUpdate',
+        workbox: {
+          skipWaiting: true,
+          clientsClaim: true,
+          runtimeCaching: []
+        },
         includeAssets: [
           'favicon.ico',
           'apple-touch-icon.png',

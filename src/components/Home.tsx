@@ -454,7 +454,7 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
   };
 
   return (
-    <div className="bg-black min-h-screen overflow-y-auto scrollbar-hide pb-[72px]" style={{ backgroundColor: '#000000' }}>
+    <div className="bg-black min-h-screen overflow-y-auto scrollbar-hide pb-[60px]" style={{ backgroundColor: '#000000' }}>
       {/* Header */}
       <div className="pt-8 pb-4">
         <div className="px-4 mb-4">

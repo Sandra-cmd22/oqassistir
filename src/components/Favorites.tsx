@@ -62,7 +62,7 @@ export function Favorites({ movies, genres, onMovieClick, onToggleFavorite, watc
       </div>
 
       {/* Movies Grid */}
-      <div className="flex-1 overflow-y-auto px-4 pb-[72px] scrollbar-hide">
+      <div className="flex-1 overflow-y-auto px-4 pb-[60px] scrollbar-hide">
         <div className="flex flex-col gap-4">
           {sortedMovies.map((movie) => {
             const movieGenres = movie.genre_ids.map(id => genres[id]).filter(Boolean).slice(0, 2).join(', ');
