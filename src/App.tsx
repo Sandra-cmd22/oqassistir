@@ -98,6 +98,8 @@ export default function App() {
   const [favorites, setFavorites] = useState<number[]>([]);
   const [tvFavorites, setTVFavorites] = useState<number[]>([]);
   const [watchedMovies, setWatchedMovies] = useState<number[]>([]);
+  const [favoriteMoviesList, setFavoriteMoviesList] = useState<Movie[]>([]);
+  const [loadingFavorites, setLoadingFavorites] = useState(false);
   const [filteredMovies, setFilteredMovies] = useState<Movie[]>([]);
   const [selectedMonth, setSelectedMonth] = useState<number | null>(null);
   const [selectedGenres, setSelectedGenres] = useState<number[]>([]);
@@ -480,6 +482,53 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('watchedMovies', JSON.stringify(watchedMovies));
   }, [watchedMovies]);
+
+  // Fetch favorite movies details when favorites change or favorites view is opened
+  useEffect(() => {
+    const fetchFavoriteMovies = async () => {
+      if (favorites.length === 0 || !isApiKeyConfigured) {
+        setFavoriteMoviesList([]);
+        return;
+      }
+
+      setLoadingFavorites(true);
+      try {
+        // Fetch movie details for each favorite ID
+        const moviePromises = favorites.map(async (movieId) => {
+          try {
+            const response = await fetch(
+              `https://api.themoviedb.org/3/movie/${movieId}?api_key=${TMDB_API_KEY}&language=pt-BR`
+            );
+            if (!response.ok) return null;
+            const data = await response.json();
+            return {
+              id: data.id,
+              title: data.title,
+              poster_path: data.poster_path,
+              backdrop_path: data.backdrop_path,
+              release_date: data.release_date,
+              overview: data.overview,
+              genre_ids: data.genres?.map((g: any) => g.id) || [],
+              vote_average: data.vote_average,
+            } as Movie;
+          } catch (error) {
+            console.error(`Error fetching movie ${movieId}:`, error);
+            return null;
+          }
+        });
+
+        const fetchedMovies = await Promise.all(moviePromises);
+        setFavoriteMoviesList(fetchedMovies.filter((m): m is Movie => m !== null));
+      } catch (error) {
+        console.error('Error fetching favorite movies:', error);
+        setFavoriteMoviesList([]);
+      } finally {
+        setLoadingFavorites(false);
+      }
+    };
+
+    fetchFavoriteMovies();
+  }, [favorites, isApiKeyConfigured]);
 
   // Fetch TV Shows
   useEffect(() => {
@@ -1058,7 +1107,8 @@ export default function App() {
 
   // Show Favorites view
   if (currentView === 'favorites') {
-    const favoriteMovies = movies.filter(movie => favorites.includes(movie.id));
+    // Use favoriteMoviesList (fetched from API) instead of filtering from movies
+    const favoriteMovies = favoriteMoviesList;
     
     return (
       <>
@@ -1068,14 +1118,20 @@ export default function App() {
           image={seoImage}
         />
         <div className="bg-black min-h-screen flex flex-col" style={{ backgroundColor: '#000000' }}>
-          <Favorites
-            movies={favoriteMovies}
-            genres={genres}
-            onMovieClick={(movie) => handleHomeMovieClick(movie, favoriteMovies)}
-            onToggleFavorite={toggleFavorite}
-            watchedMovies={watchedMovies}
-            onToggleWatched={toggleWatched}
-          />
+          {loadingFavorites ? (
+            <div className="flex items-center justify-center h-full">
+              <Loader2 className="w-12 h-12 text-white animate-spin" />
+            </div>
+          ) : (
+            <Favorites
+              movies={favoriteMovies}
+              genres={genres}
+              onMovieClick={(movie) => handleHomeMovieClick(movie, favoriteMovies)}
+              onToggleFavorite={toggleFavorite}
+              watchedMovies={watchedMovies}
+              onToggleWatched={toggleWatched}
+            />
+          )}
           <Navbar 
             currentView={currentView}
             onNavigate={handleNavigation}
