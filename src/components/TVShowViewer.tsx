@@ -48,6 +48,8 @@ interface TVShowViewerProps {
 
 export function TVShowViewer({ show, genres, onClose, onActorClick, isFavorite, onToggleFavorite, favoritesCount = 0, onNavigate, currentView = 'home', hasActiveFilters = false }: TVShowViewerProps) {
   const imageBaseUrl = 'https://image.tmdb.org/t/p/w500';
+  // UHD para iPhone 12: w1920 (1920px) é ideal, mas w1280 já é excelente
+  const backdropBaseUrl = 'https://image.tmdb.org/t/p/w1920';
 
   const cast = show.credits?.cast.slice(0, 4) || [];
   const showGenres = show.genre_ids.map(id => {
@@ -133,11 +135,12 @@ export function TVShowViewer({ show, genres, onClose, onActorClick, isFavorite, 
           <div 
             className="absolute inset-0 w-full h-full"
           >
-            {show.poster_path ? (
+            {(show.backdrop_path || show.poster_path) ? (
               <ImageWithFallback
-                src={`${imageBaseUrl}${show.poster_path}`}
+                src={show.backdrop_path ? `${backdropBaseUrl}${show.backdrop_path}` : `${imageBaseUrl}${show.poster_path}`}
                 alt={show.name}
                 className="absolute inset-0 w-full h-full object-cover"
+                style={{ objectPosition: 'top' }}
               />
             ) : (
               <div className="absolute inset-0 w-full h-full bg-[#d9d9d9] flex items-center justify-center text-white/50">

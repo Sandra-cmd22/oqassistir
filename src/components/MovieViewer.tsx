@@ -53,6 +53,8 @@ interface MovieViewerProps {
 
 export function MovieViewer({ movie, genres, onClose, onActorClick, isFavorite, onToggleFavorite, favoritesCount = 0, onNavigate, currentView = 'home', hasActiveFilters = false, apiKey, onMovieClick }: MovieViewerProps) {
   const imageBaseUrl = 'https://image.tmdb.org/t/p/w500';
+  // UHD para iPhone 12: w1920 (1920px) é ideal, mas w1280 já é excelente
+  const backdropBaseUrl = 'https://image.tmdb.org/t/p/w1920';
   const [recommendations, setRecommendations] = useState<Movie[]>([]);
   const [loadingRecommendations, setLoadingRecommendations] = useState(false);
   
@@ -206,11 +208,12 @@ export function MovieViewer({ movie, genres, onClose, onActorClick, isFavorite, 
           <div 
             className="absolute inset-0 w-full h-full"
           >
-            {movie.poster_path ? (
+            {(movie.backdrop_path || movie.poster_path) ? (
               <ImageWithFallback
-                src={`${imageBaseUrl}${movie.poster_path}`}
+                src={movie.backdrop_path ? `${backdropBaseUrl}${movie.backdrop_path}` : `${imageBaseUrl}${movie.poster_path}`}
                 alt={movie.title}
                 className="absolute inset-0 w-full h-full object-cover"
+                style={{ objectPosition: 'top' }}
               />
             ) : (
               <div className="absolute inset-0 w-full h-full bg-[#d9d9d9] flex items-center justify-center text-white/50">
