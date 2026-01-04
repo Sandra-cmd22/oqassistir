@@ -1072,7 +1072,7 @@ export default function App() {
           description="Fique por dentro das últimas notícias do cinema, lançamentos, atores e muito mais!"
           image={seoImage}
         />
-        <div className="bg-black min-h-screen flex flex-col" style={{ backgroundColor: '#000000' }}>
+        <div className="bg-black flex flex-col" style={{ backgroundColor: '#000000', height: '100vh' }}>
           <CinemaNews 
             onArticleClick={(article) => {
               setSelectedNewsArticle(article);
@@ -1117,7 +1117,7 @@ export default function App() {
           description="Veja seus filmes e séries favoritos salvos"
           image={seoImage}
         />
-        <div className="bg-black min-h-screen flex flex-col" style={{ backgroundColor: '#000000' }}>
+        <div className="bg-black flex flex-col" style={{ backgroundColor: '#000000', height: '100vh' }}>
           {loadingFavorites ? (
             <div className="flex items-center justify-center h-full">
               <Loader2 className="w-12 h-12 text-white animate-spin" />
@@ -1145,7 +1145,7 @@ export default function App() {
   }
 
   return (
-    <div className="bg-gradient-to-b from-[#000000] from-25% to-[#5f5476] min-h-screen flex flex-col">
+    <div className="bg-gradient-to-b from-[#000000] from-25% to-[#5f5476] flex flex-col" style={{ height: '100vh' }}>
       {/* API Key Warning Banner */}
       {!isApiKeyConfigured && (
         <div className="bg-yellow-500/20 border-b border-yellow-500/40 px-4 py-2">

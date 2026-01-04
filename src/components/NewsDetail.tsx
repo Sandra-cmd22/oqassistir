@@ -54,7 +54,7 @@ export function NewsDetail({ article, onBack }: NewsDetailProps) {
   };
 
   return (
-    <div className="bg-gradient-to-br from-[#0a0a0f] via-[#1a0f2e] to-[#2d1b3d] min-h-screen flex flex-col pb-24" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+    <div className="bg-gradient-to-br from-[#0a0a0f] via-[#1a0f2e] to-[#2d1b3d] flex flex-col pb-24" style={{ height: '100vh', paddingTop: 'env(safe-area-inset-top, 0px)' }}>
       {/* Header */}
       <div className="bg-black/30 backdrop-blur-md border-b border-white/10 px-4 py-3 flex items-center gap-4 sticky z-10" style={{ top: 'env(safe-area-inset-top, 0px)' }}>
         <button
