@@ -112,7 +112,7 @@ export function MovieViewer({ movie, genres, onClose, onActorClick, isFavorite, 
   if (!movie) {
     return (
       <div className="flex items-center justify-center h-full">
-        <p className="text-white text-center font-['Montserrat:Light',sans-serif] font-light">
+        <p className="text-white text-center" style={{ fontFamily: '-apple-system, "SF Pro Display", "SF Pro Text", system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', fontWeight: 300 }}>
           Nenhum filme encontrado.
         </p>
       </div>
@@ -255,7 +255,7 @@ export function MovieViewer({ movie, genres, onClose, onActorClick, isFavorite, 
             {movie.vote_average && movie.vote_average > 0 && (
               <div className="absolute right-0 p-4 z-10" style={{ top: 'env(safe-area-inset-top, 16px)' }}>
                 <div className="bg-black/40 backdrop-blur-md rounded-full px-3 py-1.5 flex items-center gap-1.5 shadow-lg">
-                  <span className="font-['Montserrat:Bold',sans-serif] text-white text-[12px]">
+                  <span className="text-white text-[12px]" style={{ fontFamily: '-apple-system, "SF Pro Display", "SF Pro Text", system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', fontWeight: 700 }}>
                     IMDb {movie.vote_average.toFixed(1)}
                   </span>
                 </div>
@@ -266,24 +266,24 @@ export function MovieViewer({ movie, genres, onClose, onActorClick, isFavorite, 
           {/* Content overlay on poster - positioned at bottom */}
           <div className="absolute left-0 right-0 px-6 z-20" style={{ bottom: '24px' }}>
             {/* Movie Title */}
-            <h1 className="text-white mb-3 leading-tight text-center drop-shadow-lg" style={{ fontFamily: '-apple-system, "SF Pro Display", "SF Pro Text", system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', fontWeight: 700, fontSize: '30px' }}>
+            <h1 className="text-white mb-3 leading-tight text-center drop-shadow-lg" style={{ fontFamily: '-apple-system, "SF Pro Display", "SF Pro Text", system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', fontWeight: 500, fontSize: '20px' }}>
               {movie.title}
             </h1>
 
             {/* Meta Tags - Centered */}
             <div className="flex items-center justify-center gap-2 mb-4 flex-wrap">
-              <span className="bg-white/10 backdrop-blur-sm rounded-full px-3 py-1.5 text-[12px] font-['Montserrat:Medium',sans-serif] text-white">
+              <span className="bg-white/10 backdrop-blur-sm rounded-full px-3 py-1.5 text-[12px]" style={{ fontFamily: '-apple-system, "SF Pro Display", "SF Pro Text", system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', fontWeight: 500, color: '#D8D8D8' }}>
                 {firstGenre}
               </span>
               {movie.certification && (
-                <span className="bg-white/10 backdrop-blur-sm rounded-full px-3 py-1.5 text-[12px] font-['Montserrat:Medium',sans-serif] text-white">
+                <span className="bg-white/10 backdrop-blur-sm rounded-full px-3 py-1.5 text-[12px]" style={{ fontFamily: '-apple-system, "SF Pro Display", "SF Pro Text", system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', fontWeight: 500, color: '#D8D8D8' }}>
                   {movie.certification}
                 </span>
               )}
-              <span className="bg-white/10 backdrop-blur-sm rounded-full px-3 py-1.5 text-[12px] font-['Montserrat:Medium',sans-serif] text-white">
+              <span className="bg-white/10 backdrop-blur-sm rounded-full px-3 py-1.5 text-[12px]" style={{ fontFamily: '-apple-system, "SF Pro Display", "SF Pro Text", system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', fontWeight: 500, color: '#D8D8D8' }}>
                 {country}
               </span>
-              <span className="bg-white/10 backdrop-blur-sm rounded-full px-3 py-1.5 text-[12px] font-['Montserrat:Medium',sans-serif] text-white">
+              <span className="bg-white/10 backdrop-blur-sm rounded-full px-3 py-1.5 text-[12px]" style={{ fontFamily: '-apple-system, "SF Pro Display", "SF Pro Text", system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', fontWeight: 500, color: '#D8D8D8' }}>
                 {releaseYear}
               </span>
             </div>
@@ -295,22 +295,22 @@ export function MovieViewer({ movie, genres, onClose, onActorClick, isFavorite, 
                   href={`https://www.youtube.com/watch?v=${movie.trailer_key}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="bg-white/22 backdrop-blur-md rounded-full p-3 hover:bg-white/35 transition-all active:scale-95"
+                  className="bg-white/22 backdrop-blur-md rounded-full p-4 hover:bg-white/35 transition-all active:scale-95"
                 >
-                  <Youtube className="w-5 h-5 text-white" />
+                  <Youtube className="w-6 h-6 text-white" style={{ color: 'rgba(255, 255, 255, 0.95)' }} />
                 </a>
               )}
               <button 
                 onClick={() => onToggleFavorite(movie.id)}
-                className={`bg-white/22 backdrop-blur-md rounded-full p-3 hover:bg-white/35 transition-all active:scale-95 ${isFavorite ? 'bg-white/35' : ''}`}
+                className={`bg-white/22 backdrop-blur-md rounded-full p-4 hover:bg-white/35 transition-all active:scale-95 ${isFavorite ? 'bg-white/35' : ''}`}
               >
-                <Heart className={`w-5 h-5 ${isFavorite ? 'text-white fill-white' : 'text-white'}`} />
+                <Heart className={`w-6 h-6 text-white ${isFavorite ? 'fill-white' : ''}`} style={{ color: 'rgba(255, 255, 255, 0.95)' }} />
               </button>
               <button 
                 onClick={handleShare}
-                className="bg-white/22 backdrop-blur-md rounded-full p-3 hover:bg-white/35 transition-all active:scale-95"
+                className="bg-white/22 backdrop-blur-md rounded-full p-4 hover:bg-white/35 transition-all active:scale-95"
               >
-                <Share2 className="w-5 h-5 text-white" />
+                  <Share2 className="w-6 h-6 text-white" style={{ color: 'rgba(255, 255, 255, 0.95)' }} />
               </button>
             </div>
 
@@ -320,16 +320,16 @@ export function MovieViewer({ movie, genres, onClose, onActorClick, isFavorite, 
                 href={getStreamingLink()}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full bg-white hover:bg-white/90 h-[50px] rounded-[8px] flex items-center justify-center gap-3 px-4 py-2 shadow-lg transition-all active:scale-95"
+                className="w-full bg-white hover:bg-white/90 h-[50px] rounded-[24px] flex items-center justify-center gap-3 px-4 py-2 shadow-lg transition-all active:scale-95"
               >
-                <Play className="w-5 h-5 text-black fill-black" />
-                <p className="font-['Montserrat:Bold',sans-serif] text-black text-[16px]">
+                <Play className="w-5 h-5 text-black" fill="#000000" />
+                <p className="text-[14px] text-black" style={{ fontFamily: '-apple-system, "SF Pro Display", "SF Pro Text", system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', fontWeight: 700 }}>
                   Assistir
                 </p>
               </a>
             ) : isInTheaters() ? (
               <div className="w-full bg-white/20 backdrop-blur-md h-[50px] rounded-[8px] flex items-center justify-center px-4 py-2">
-                <p className="font-['Montserrat:Regular',sans-serif] text-white/70 text-[14px]">
+                <p className="text-[14px]" style={{ fontFamily: '-apple-system, "SF Pro Display", "SF Pro Text", system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', fontWeight: 400, color: '#969696' }}>
                   Disponível só nos cinemas
                 </p>
               </div>
@@ -338,16 +338,16 @@ export function MovieViewer({ movie, genres, onClose, onActorClick, isFavorite, 
                 href={`https://www.youtube.com/watch?v=${movie.trailer_key}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full bg-white hover:bg-white/90 h-[50px] rounded-[8px] flex items-center justify-center gap-3 px-4 py-2 shadow-lg transition-all active:scale-95"
+                className="w-full bg-white hover:bg-white/90 h-[50px] rounded-[24px] flex items-center justify-center gap-3 px-4 py-2 shadow-lg transition-all active:scale-95"
               >
-                <Play className="w-5 h-5 text-black fill-black" />
-                <p className="font-['Montserrat:Bold',sans-serif] text-black text-[16px]">
+                <Play className="w-5 h-5 text-black" fill="#000000" />
+                <p className="text-[14px] text-black" style={{ fontFamily: '-apple-system, "SF Pro Display", "SF Pro Text", system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', fontWeight: 700 }}>
                   Ver Trailer
                 </p>
               </a>
             ) : (
               <div className="w-full bg-white/20 backdrop-blur-md h-[50px] rounded-[8px] flex items-center justify-center px-4 py-2">
-                <p className="font-['Montserrat:Regular',sans-serif] text-white/70 text-[14px]">
+                <p className="text-[14px]" style={{ fontFamily: '-apple-system, "SF Pro Display", "SF Pro Text", system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', fontWeight: 400, color: '#969696' }}>
                   Sem trailer no momento
                 </p>
               </div>
@@ -362,10 +362,10 @@ export function MovieViewer({ movie, genres, onClose, onActorClick, isFavorite, 
           <div className="w-full max-w-full px-6 pb-6 flex flex-col" style={{ gap: '24px' }}>
             {/* Synopsis */}
             <div className="w-full">
-              <p className="font-['Montserrat:SemiBold',sans-serif] text-white text-[16px] mb-3">
+              <p className="text-white text-[16px] mb-3" style={{ fontFamily: '-apple-system, "SF Pro Display", "SF Pro Text", system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', fontWeight: 600 }}>
                 Sinopse:
               </p>
-              <p className="text-white/90 text-[14px] leading-relaxed" style={{ paddingBottom: '24px', fontFamily: '-apple-system, "SF Pro Display", "SF Pro Text", system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', fontWeight: 400 }}>
+              <p className="text-[14px] leading-relaxed" style={{ paddingBottom: '24px', fontFamily: '-apple-system, "SF Pro Display", "SF Pro Text", system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', fontWeight: 400, color: '#969696' }}>
                 {movie.overview || 'Sinopse não disponível.'}
               </p>
             </div>
@@ -373,7 +373,7 @@ export function MovieViewer({ movie, genres, onClose, onActorClick, isFavorite, 
             {/* Where to Watch */}
             {movie.watch_providers && movie.watch_providers.length > 0 && (
               <div className="w-full bg-white/10 backdrop-blur-md rounded-[10px] p-4" style={{ paddingTop: '24px', paddingBottom: '24px' }}>
-                <p className="font-['Montserrat:SemiBold',sans-serif] text-white text-[16px] mb-3">
+                <p className="text-white text-[16px] mb-3" style={{ fontFamily: '-apple-system, "SF Pro Display", "SF Pro Text", system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', fontWeight: 600 }}>
                   Onde Assistir:
                 </p>
                 <div className="flex gap-3 flex-wrap">
@@ -386,7 +386,7 @@ export function MovieViewer({ movie, genres, onClose, onActorClick, isFavorite, 
                           className="w-full h-full object-contain rounded-[6px]"
                         />
                       </div>
-                      <p className="font-['Montserrat:Regular',sans-serif] text-white/90 text-[11px] text-center max-w-[80px]">
+                      <p className="text-white/90 text-[11px] text-center max-w-[80px]" style={{ fontFamily: '-apple-system, "SF Pro Display", "SF Pro Text", system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', fontWeight: 400 }}>
                         {provider.provider_name}
                       </p>
                     </div>
@@ -398,7 +398,7 @@ export function MovieViewer({ movie, genres, onClose, onActorClick, isFavorite, 
             {/* Cast */}
             {cast.length > 0 && (
               <div className="w-full bg-white/10 backdrop-blur-md rounded-[10px] p-4" style={{ paddingTop: '24px', paddingBottom: '24px' }}>
-                <p className="font-['Montserrat:SemiBold',sans-serif] text-white text-[16px] mb-4">
+                <p className="text-white text-[16px] mb-4" style={{ fontFamily: '-apple-system, "SF Pro Display", "SF Pro Text", system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', fontWeight: 600 }}>
                   Elenco:
                 </p>
                 <div className="flex gap-3 w-full overflow-x-auto pb-2 scrollbar-hide">
@@ -421,7 +421,7 @@ export function MovieViewer({ movie, genres, onClose, onActorClick, isFavorite, 
                           </div>
                         )}
                       </div>
-                      <p className="font-['Montserrat:Regular',sans-serif] text-white/90 text-[13px] text-center w-full break-words group-hover:text-white transition-colors">
+                      <p className="text-white/90 text-[13px] text-center w-full break-words group-hover:text-white transition-colors" style={{ fontFamily: '-apple-system, "SF Pro Display", "SF Pro Text", system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', fontWeight: 400 }}>
                         {actor.name}
                       </p>
                     </button>
@@ -432,11 +432,11 @@ export function MovieViewer({ movie, genres, onClose, onActorClick, isFavorite, 
 
             {/* Recommendations */}
             <div className="w-full">
-              <p className="font-['Montserrat:SemiBold',sans-serif] text-white text-[16px] mb-3" style={{ paddingTop: '24px' }}>
+              <p className="text-white text-[16px] mb-3" style={{ fontFamily: '-apple-system, "SF Pro Display", "SF Pro Text", system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', fontWeight: 600, paddingTop: '24px' }}>
                 Recomendações:
               </p>
               {loadingRecommendations ? (
-                <p className="font-['Montserrat:Light',sans-serif] text-white/90 text-[14px] leading-relaxed">
+                <p className="text-white/90 text-[14px] leading-relaxed" style={{ fontFamily: '-apple-system, "SF Pro Display", "SF Pro Text", system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', fontWeight: 300 }}>
                   Carregando...
                 </p>
               ) : recommendations.length > 0 ? (
@@ -467,14 +467,14 @@ export function MovieViewer({ movie, genres, onClose, onActorClick, isFavorite, 
                           </div>
                         )}
                       </div>
-                      <p className="font-['Montserrat:Regular',sans-serif] text-white/90 text-[13px] text-center w-full break-words group-hover:text-white transition-colors">
+                      <p className="text-white/90 text-[13px] text-center w-full break-words group-hover:text-white transition-colors" style={{ fontFamily: '-apple-system, "SF Pro Display", "SF Pro Text", system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', fontWeight: 400 }}>
                         {recommendation.title}
                       </p>
                     </button>
                   ))}
                 </div>
               ) : (
-                <p className="font-['Montserrat:Light',sans-serif] text-white/70 text-[14px]">
+                <p className="text-white/70 text-[14px]" style={{ fontFamily: '-apple-system, "SF Pro Display", "SF Pro Text", system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', fontWeight: 300 }}>
                   Nenhuma recomendação disponível no momento.
                 </p>
               )}

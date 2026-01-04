@@ -477,7 +477,7 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Buscar filmes..."
-              className="w-full bg-white/5 backdrop-blur-xl border border-white/10 rounded-[16px] pl-12 pr-4 py-3 text-white placeholder:text-white/30 font-['Montserrat:Regular',sans-serif] text-[14px] focus:outline-none focus:border-white/20 focus:bg-white/8 transition-all"
+              className="w-full bg-[#1a1a1a] backdrop-blur-xl border border-white/10 rounded-[8px] pl-12 pr-4 py-3 text-white placeholder:text-white/30 font-['Montserrat:Regular',sans-serif] text-[14px] focus:outline-none focus:border-white/20 focus:bg-[#2a2a2a] transition-all"
             />
             {isSearching && (
               <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40 animate-spin z-10" />
@@ -486,7 +486,7 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
           {onFilterClick && debouncedSearchQuery && debouncedSearchQuery.length >= 3 && (
             <button
               onClick={onFilterClick}
-              className="p-3 bg-white/5 backdrop-blur-xl border border-white/10 hover:bg-white/10 hover:border-white/20 rounded-[16px] transition-all flex-shrink-0"
+              className="p-3 bg-white/5 backdrop-blur-xl border border-white/10 hover:bg-white/10 hover:border-white/20 rounded-[8px] transition-all flex-shrink-0"
             >
               <SlidersHorizontal className="w-5 h-5 text-white" />
             </button>
@@ -534,7 +534,7 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
 
                     {/* Movie info */}
                     <div className="flex-1 flex flex-col items-start gap-1 text-left">
-                      <h3 className="font-['Montserrat:SemiBold',sans-serif] text-white text-[15px] line-clamp-2">
+                      <h3 className="font-['Montserrat:SemiBold',sans-serif] text-white text-[12px] line-clamp-2">
                         {movie.title}
                       </h3>
                       
@@ -608,7 +608,7 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
 
                     {/* TV Show info */}
                     <div className="flex-1 flex flex-col items-start gap-1 text-left">
-                      <h3 className="font-['Montserrat:SemiBold',sans-serif] text-white text-[15px] line-clamp-2">
+                      <h3 className="font-['Montserrat:SemiBold',sans-serif] text-white text-[12px] line-clamp-2">
                         {show.name}
                       </h3>
                       
@@ -671,7 +671,7 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
 
                     {/* Actor info */}
                     <div className="flex-1 flex flex-col items-start gap-1 text-left">
-                      <h3 className="font-['Montserrat:SemiBold',sans-serif] text-white text-[15px]">
+                      <h3 className="font-['Montserrat:SemiBold',sans-serif] text-white text-[12px]">
                         {actor.name}
                       </h3>
                       
@@ -720,7 +720,7 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
                       )}
                     </div>
                     <div className="flex-1 flex flex-col items-start gap-1 text-left">
-                      <h3 className="font-['Montserrat:SemiBold',sans-serif] text-white text-[15px] line-clamp-2">
+                      <h3 className="font-['Montserrat:SemiBold',sans-serif] text-white text-[12px] line-clamp-2">
                         {movie.title}
                       </h3>
                       <div className="flex items-center gap-2 flex-wrap">
@@ -925,7 +925,7 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
                   {/* Streaming providers badge */}
                   {movie.watch_providers && <StreamingBadge providers={movie.watch_providers} />}
                 </div>
-                <h3 className="font-['Montserrat:SemiBold',sans-serif] text-white text-[13px] line-clamp-2 text-left h-[36px]">
+                <h3 className="font-['Montserrat:SemiBold',sans-serif] text-white text-[12px] line-clamp-2 text-left h-[36px]">
                   {movie.title}
                 </h3>
               </button>
@@ -980,7 +980,7 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
                     </p>
                   </div>
                 </div>
-                <h3 className="font-['Montserrat:SemiBold',sans-serif] text-white text-[13px] line-clamp-2 text-left h-[36px]">
+                <h3 className="font-['Montserrat:SemiBold',sans-serif] text-white text-[12px] line-clamp-2 text-left h-[36px]">
                   {movie.title}
                 </h3>
               </button>
@@ -1040,7 +1040,7 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
                     </div>
                   )}
                 </div>
-                <h3 className="font-['Montserrat:SemiBold',sans-serif] text-white text-[13px] line-clamp-2 text-left h-[36px]">
+                <h3 className="font-['Montserrat:SemiBold',sans-serif] text-white text-[12px] line-clamp-2 text-left h-[36px]">
                   {movie.title}
                 </h3>
               </button>
@@ -1086,7 +1086,7 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
                   {/* Streaming providers badge */}
                   {movie.watch_providers && <StreamingBadge providers={movie.watch_providers} />}
                 </div>
-                <h3 className="font-['Montserrat:SemiBold',sans-serif] text-white text-[13px] line-clamp-2 text-left h-[36px]">
+                <h3 className="font-['Montserrat:SemiBold',sans-serif] text-white text-[12px] line-clamp-2 text-left h-[36px]">
                   {movie.title}
                 </h3>
               </button>
@@ -1185,9 +1185,9 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
 
                 {/* Movie info */}
                 <div className="flex-1 flex flex-col items-start gap-1 text-left">
-                  <h3 className="font-['Montserrat:SemiBold',sans-serif] text-white text-[15px] line-clamp-2">
-                    {movie.title}
-                  </h3>
+                      <h3 className="font-['Montserrat:SemiBold',sans-serif] text-white text-[12px] line-clamp-2">
+                        {movie.title}
+                      </h3>
                   
                   <p className="font-['Montserrat:Regular',sans-serif] text-white/60 text-[12px]">
                     {formatDate(movie.release_date)}
