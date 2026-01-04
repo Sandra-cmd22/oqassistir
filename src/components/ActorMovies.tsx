@@ -134,7 +134,7 @@ export function ActorMovies({ actor, apiKey, onClose, onMovieClick }: ActorMovie
   };
 
   return (
-    <div className="fixed inset-0 bg-gradient-to-b from-[#000000] from-25% to-[#5f5476] z-50 overflow-y-auto">
+    <div className="fixed bg-gradient-to-b from-[#000000] from-25% to-[#5f5476] z-50 overflow-y-auto" style={{ top: 0, left: 0, right: 0, bottom: 0, width: '100%', height: '100svh' }}>
       {/* Loading overlay */}
       {loadingMovie && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
@@ -148,7 +148,7 @@ export function ActorMovies({ actor, apiKey, onClose, onMovieClick }: ActorMovie
       )}
       
       {/* Header */}
-      <div className="bg-black/40 backdrop-blur-md border-b border-white/10 px-4 py-3 flex items-center gap-3 sticky top-0 z-10">
+      <div className="bg-black/40 backdrop-blur-md border-b border-white/10 px-4 py-3 flex items-center gap-3 sticky z-10" style={{ top: 'env(safe-area-inset-top, 0px)' }}>
         <button
           onClick={onClose}
           className="p-2 hover:bg-white/10 rounded-full transition-all"

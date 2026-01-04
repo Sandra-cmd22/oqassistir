@@ -50,9 +50,9 @@ export function Favorites({ movies, genres, onMovieClick, onToggleFavorite, watc
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
       {/* Header */}
-      <div className="px-6 pt-6 pb-4 bg-gradient-to-b from-black/60 to-transparent flex-shrink-0">
+      <div className="px-6 pb-4 bg-gradient-to-b from-black/60 to-transparent flex-shrink-0" style={{ paddingTop: '24px' }}>
         <h1 className="text-white text-[28px]" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 900 }}>
           Meus Favoritos
         </h1>
