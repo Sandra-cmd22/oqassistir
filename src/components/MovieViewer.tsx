@@ -195,7 +195,7 @@ export function MovieViewer({ movie, genres, onClose, onActorClick, isFavorite, 
   };
 
   return (
-    <div className="relative w-full flex flex-col bg-black overflow-y-auto" style={{ height: '100vh', pointerEvents: 'auto', top: 0, left: 0, right: 0, bottom: 0 }}>
+    <div className="relative w-full flex flex-col bg-black overflow-y-auto" style={{ height: '100svh', pointerEvents: 'auto', top: 0, left: 0, right: 0, bottom: 0 }}>
       {/* Poster Section - Full bleed até status bar - FORA do scroll */}
       <section 
         className="relative w-full overflow-hidden flex-shrink-0"
