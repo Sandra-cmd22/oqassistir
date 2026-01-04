@@ -201,22 +201,41 @@ export function MovieViewer({ movie, genres, onClose, onActorClick, isFavorite, 
         className="relative w-full overflow-hidden flex-shrink-0"
         style={{ 
           height: '100svh',
-          paddingTop: 'env(safe-area-inset-top, 0px)',
         }}
       >
           {/* Poster Image - Full height, extends to status bar */}
           <div 
-            className="absolute inset-0 w-full h-full"
+            className="absolute w-full"
+            style={{
+              top: 0,
+              left: 0,
+              right: 0,
+              height: '100svh',
+            }}
           >
             {(movie.backdrop_path || movie.poster_path) ? (
               <ImageWithFallback
                 src={movie.backdrop_path ? `${backdropBaseUrl}${movie.backdrop_path}` : `${imageBaseUrl}${movie.poster_path}`}
                 alt={movie.title}
-                className="absolute inset-0 w-full h-full object-cover"
-                style={{ objectPosition: 'top' }}
+                className="absolute w-full object-cover"
+                style={{ 
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100svh',
+                  objectPosition: 'top',
+                }}
               />
             ) : (
-              <div className="absolute inset-0 w-full h-full bg-[#d9d9d9] flex items-center justify-center text-white/50">
+              <div 
+                className="absolute w-full bg-[#d9d9d9] flex items-center justify-center text-white/50"
+                style={{
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100svh',
+                }}
+              >
                 Sem imagem
               </div>
             )}
@@ -227,7 +246,6 @@ export function MovieViewer({ movie, genres, onClose, onActorClick, isFavorite, 
               style={{
                 height: '20%',
                 background: 'linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0) 100%)',
-                paddingTop: 'env(safe-area-inset-top, 0px)',
               }}
             />
             
