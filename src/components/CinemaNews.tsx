@@ -202,7 +202,7 @@ export function CinemaNews({ onArticleClick }: CinemaNewsProps) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full min-h-screen py-20">
+      <div className="flex items-center justify-center h-full py-20" style={{ minHeight: '100svh', paddingTop: 'env(safe-area-inset-top, 0px)' }}>
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="w-8 h-8 text-white animate-spin" />
           <p className="font-['Montserrat:Light',sans-serif] text-white/70 text-[14px]">
@@ -215,7 +215,7 @@ export function CinemaNews({ onArticleClick }: CinemaNewsProps) {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-full min-h-screen py-20 px-4">
+      <div className="flex items-center justify-center h-full py-20 px-4" style={{ minHeight: '100svh', paddingTop: 'env(safe-area-inset-top, 0px)' }}>
         <div className="bg-red-500/20 border border-red-500/40 rounded-[10px] p-4 max-w-md">
           <p className="font-['Montserrat:Regular',sans-serif] text-white text-center">
             {error}
@@ -226,7 +226,7 @@ export function CinemaNews({ onArticleClick }: CinemaNewsProps) {
   }
 
   return (
-    <div className="px-4 py-6 space-y-4 pb-24">
+    <div className="px-4 py-6 space-y-4 overflow-y-auto flex-1 scrollbar-hide" style={{ paddingBottom: '60px', paddingTop: 'calc(24px + env(safe-area-inset-top, 0px))' }}>
         <div className="mb-6">
           <h2 className="text-white text-[24px] mb-2" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 900 }}>
             Notícias do Cinema

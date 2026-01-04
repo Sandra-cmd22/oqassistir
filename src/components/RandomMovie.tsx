@@ -488,8 +488,8 @@ export function RandomMovie({ apiKey, genres, onMovieClick, onToggleFavorite, fa
   ];
 
   return (
-    <div className="bg-black overflow-y-auto scrollbar-hide pb-[60px]" style={{ backgroundColor: '#000000', height: '100vh', paddingTop: 'env(safe-area-inset-top, 0px)' }}>
-      <div className="px-6 pb-6" style={{ paddingTop: '32px' }}>
+    <div className="bg-black overflow-y-auto scrollbar-hide pb-[60px]" style={{ backgroundColor: '#000000', height: '100svh' }}>
+      <div className="px-6 pb-6" style={{ paddingTop: 'calc(32px + env(safe-area-inset-top, 0px))' }}>
         <h1 className="text-white text-[28px] mb-2" style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 900 }}>
           Não sei o que assistir
         </h1>

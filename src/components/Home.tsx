@@ -454,9 +454,9 @@ export function Home({ upcomingMovies, popularMovies, nowPlayingMovies, nostalgi
   };
 
   return (
-    <div className="bg-black overflow-y-auto scrollbar-hide pb-[60px]" style={{ backgroundColor: '#000000', height: '100vh', paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+    <div className="bg-black overflow-y-auto scrollbar-hide pb-[60px]" style={{ backgroundColor: '#000000', height: '100svh' }}>
       {/* Header */}
-      <div className="pb-4" style={{ paddingTop: '32px' }}>
+      <div className="pb-4" style={{ paddingTop: 'calc(32px + env(safe-area-inset-top, 0px))' }}>
         <div className="px-4 mb-4">
           {/* Logo */}
           <div className="h-[24px] w-auto">

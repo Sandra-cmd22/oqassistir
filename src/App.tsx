@@ -887,7 +887,7 @@ export default function App() {
     return (
       <>
         {loadingMovie ? (
-          <div className="fixed bg-black flex items-center justify-center" style={{ top: 0, left: 0, right: 0, bottom: 0, zIndex: 1, height: '100vh' }}>
+          <div className="fixed bg-black flex items-center justify-center" style={{ top: 0, left: 0, right: 0, bottom: 0, zIndex: 1, height: '100svh' }}>
             <Loader2 className="w-12 h-12 text-white animate-spin" />
           </div>
         ) : (
@@ -924,7 +924,7 @@ export default function App() {
     return (
       <>
         {loadingTVShow ? (
-          <div className="fixed bg-black flex items-center justify-center" style={{ top: 0, left: 0, right: 0, bottom: 0, zIndex: 50, height: '100vh' }}>
+          <div className="fixed bg-black flex items-center justify-center" style={{ top: 0, left: 0, right: 0, bottom: 0, zIndex: 50, height: '100svh' }}>
             <Loader2 className="w-12 h-12 text-white animate-spin" />
           </div>
         ) : (
@@ -950,7 +950,7 @@ export default function App() {
 
   if (loading) {
     return (
-      <div className="bg-gradient-to-br from-[#0a0a0f] via-[#1a0f2e] to-[#2d1b3d] min-h-screen flex items-center justify-center">
+      <div className="bg-gradient-to-br from-[#0a0a0f] via-[#1a0f2e] to-[#2d1b3d] flex items-center justify-center" style={{ height: '100svh' }}>
         <Loader2 className="w-12 h-12 text-white animate-spin" />
       </div>
     );
@@ -1070,7 +1070,7 @@ export default function App() {
           description="Fique por dentro das últimas notícias do cinema, lançamentos, atores e muito mais!"
           image={seoImage}
         />
-        <div className="bg-black flex flex-col" style={{ backgroundColor: '#000000', height: '100vh' }}>
+        <div className="bg-black flex flex-col overflow-hidden" style={{ backgroundColor: '#000000', height: '100svh' }}>
           <CinemaNews 
             onArticleClick={(article) => {
               setSelectedNewsArticle(article);
@@ -1115,7 +1115,7 @@ export default function App() {
           description="Veja seus filmes e séries favoritos salvos"
           image={seoImage}
         />
-        <div className="bg-black flex flex-col" style={{ backgroundColor: '#000000', height: '100vh' }}>
+        <div className="bg-black flex flex-col" style={{ backgroundColor: '#000000', height: '100svh' }}>
           {loadingFavorites ? (
             <div className="flex items-center justify-center h-full">
               <Loader2 className="w-12 h-12 text-white animate-spin" />
@@ -1143,7 +1143,7 @@ export default function App() {
   }
 
   return (
-    <div className="bg-gradient-to-b from-[#000000] from-25% to-[#5f5476] flex flex-col" style={{ height: '100vh' }}>
+    <div className="bg-gradient-to-b from-[#000000] from-25% to-[#5f5476] flex flex-col" style={{ height: '100svh' }}>
       {/* API Key Warning Banner */}
       {!isApiKeyConfigured && (
         <div className="bg-yellow-500/20 border-b border-yellow-500/40 px-4 py-2">

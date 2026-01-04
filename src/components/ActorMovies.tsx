@@ -148,7 +148,7 @@ export function ActorMovies({ actor, apiKey, onClose, onMovieClick }: ActorMovie
       )}
       
       {/* Header */}
-      <div className="bg-black/40 backdrop-blur-md border-b border-white/10 px-4 py-3 flex items-center gap-3 sticky z-10" style={{ top: 'env(safe-area-inset-top, 0px)' }}>
+      <div className="bg-black/40 backdrop-blur-md border-b border-white/10 px-4 py-3 flex items-center gap-3 sticky z-10" style={{ top: 'env(safe-area-inset-top, 0px)', paddingTop: 'calc(12px + env(safe-area-inset-top, 0px))' }}>
         <button
           onClick={onClose}
           className="p-2 hover:bg-white/10 rounded-full transition-all"

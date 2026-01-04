@@ -374,10 +374,10 @@ export function MovieViewer({ movie, genres, onClose, onActorClick, isFavorite, 
         </section>
 
       {/* Main Content - Scrollable - Agora separado do poster */}
-      <div className="flex-shrink-0 scrollbar-hide bg-black" style={{ paddingBottom: 'env(safe-area-inset-bottom, 60px)', pointerEvents: 'auto', backgroundColor: '#000000' }}>
+      <div className="flex-shrink-0 scrollbar-hide bg-black overflow-y-auto" style={{ paddingBottom: 'calc(60px + env(safe-area-inset-bottom, 0px))', pointerEvents: 'auto', backgroundColor: '#000000' }}>
         {/* Additional Information - Below the poster */}
         <div className="w-full bg-black relative" style={{ backgroundColor: '#000000', zIndex: 10, paddingTop: '24px' }}>
-          <div className="w-full max-w-full px-6 pb-6 flex flex-col" style={{ gap: '24px' }}>
+          <div className="w-full max-w-full px-6 flex flex-col" style={{ gap: '24px', paddingBottom: '24px' }}>
             {/* Synopsis */}
             <div className="w-full">
               <p className="text-white text-[16px] mb-3" style={{ fontFamily: '-apple-system, "SF Pro Display", "SF Pro Text", system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', fontWeight: 600 }}>
@@ -449,7 +449,7 @@ export function MovieViewer({ movie, genres, onClose, onActorClick, isFavorite, 
             )}
 
             {/* Recommendations */}
-            <div className="w-full">
+            <div className="w-full" style={{ paddingBottom: '24px' }}>
               <p className="text-white text-[16px] mb-3" style={{ fontFamily: '-apple-system, "SF Pro Display", "SF Pro Text", system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', fontWeight: 600, paddingTop: '24px' }}>
                 Recomendações:
               </p>
@@ -458,7 +458,7 @@ export function MovieViewer({ movie, genres, onClose, onActorClick, isFavorite, 
                   Carregando...
                 </p>
               ) : recommendations.length > 0 ? (
-                <div className="flex gap-3 w-full overflow-x-auto pb-2 scrollbar-hide">
+                <div className="flex gap-3 w-full overflow-x-auto pb-4 scrollbar-hide">
                   {recommendations.map((recommendation) => (
                     <button
                       key={recommendation.id}

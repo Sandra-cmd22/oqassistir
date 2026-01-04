@@ -292,10 +292,10 @@ export function TVShowViewer({ show, genres, onClose, onActorClick, isFavorite, 
         </section>
 
       {/* Main Content - Scrollable - Agora separado do poster */}
-      <div className="flex-shrink-0 scrollbar-hide bg-black" style={{ paddingBottom: 'env(safe-area-inset-bottom, 60px)', pointerEvents: 'auto', backgroundColor: '#000000' }}>
+      <div className="flex-shrink-0 scrollbar-hide bg-black overflow-y-auto" style={{ paddingBottom: 'calc(60px + env(safe-area-inset-bottom, 0px))', pointerEvents: 'auto', backgroundColor: '#000000' }}>
         {/* Additional Information - Below the poster */}
         <div className="w-full bg-black relative" style={{ backgroundColor: '#000000', zIndex: 10, paddingTop: '24px' }}>
-          <div className="w-full max-w-full px-6 pb-6 flex flex-col gap-8">
+          <div className="w-full max-w-full px-6 flex flex-col gap-8" style={{ paddingBottom: '24px' }}>
             {/* Synopsis */}
             <div className="w-full">
               <p className="text-white text-[16px] mb-2" style={{ fontFamily: '-apple-system, "SF Pro Display", "SF Pro Text", system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', fontWeight: 600 }}>
